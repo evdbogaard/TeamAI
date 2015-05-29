@@ -8,7 +8,9 @@ namespace TeamAI
     {
         public Vector3 position;
         public Vector3 min;
+        public Vector3 cameraMin;
         public Vector3 max;
+        public Vector3 cameraMax;
         public float score;
         public int x;
         public int y;
@@ -24,6 +26,8 @@ namespace TeamAI
 
         public const int GridSizeX = 20;
         public const int GridSizeY = 20;
+
+        static public bool DebugEnabled = true;
 
         public static GridPoint[] Grid = new GridPoint[GridSizeX * GridSizeY];
 
@@ -53,7 +57,9 @@ namespace TeamAI
                     GridPoint gp = new GridPoint();
                     gp.position = center;
                     gp.min = current;
+                    gp.cameraMin = Camera.main.WorldToScreenPoint(gp.min);
                     gp.max = current + new Vector3(sGridWidth, sGridHeight, 0.0f);
+                    gp.cameraMax = Camera.main.WorldToScreenPoint(gp.max);
                     gp.score = 0.0f;
                     gp.x = x;
                     gp.y = y;
