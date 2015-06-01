@@ -22,6 +22,8 @@ namespace TeamAI
         static public GameObject sField = null;
         static public Bounds sFieldBounds;
 
+        static public Ball sBall = null;
+
         static public float sGridWidth = 0.0f;
         static public float sGridHeight = 0.0f;
 
@@ -33,16 +35,21 @@ namespace TeamAI
         public static GridPoint[] Grid = new GridPoint[GridSizeX * GridSizeY];
         public static List<Formation> sFormations;
 
+        public static GridPoint[] PlanGrid = new GridPoint[4 * 3];
+
         static public void init()
         {
             sField = GameObject.Find("Field");
             sFieldBounds = sField.GetComponent<Collider2D>().bounds;
+
+            sBall = GameObject.Find("Ball").GetComponent<Ball>();
 
 
             sFormations = new List<Formation>();
 
             loadFormations();
             createStartegyGrid();
+            createPlanGrid();
         }
 
         static public void loadFormations()
@@ -124,6 +131,52 @@ namespace TeamAI
             }
         }
 
+        static public int planGridId(Vector3 pos)
+        {
+            for (int i = 0; i < 3*4; i++)
+            {
+                if (pos.x >= PlanGrid[i].min.x && pos.x <= PlanGrid[i].max.x &&
+                    pos.y >= PlanGrid[i].min.y && pos.y <= PlanGrid[i].max.y)
+                {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        static private void createPlanGrid()
+        {
+            Vector3 min = sFieldBounds.min;
+            Vector3 max = sFieldBounds.max;
+            Vector3 current = min;
+
+            float width = (max.x - min.x) / 4.0f;
+            float heigth = (max.y - min.y) / 3.0f;
+
+            for (int y = 0; y < 3; y++)
+            {
+                for (int x = 0; x < 4; x++)
+                {
+                    Vector3 center = current + new Vector3(width / 2.0f, heigth / 2.0f, 0.0f);
+
+                    GridPoint gp = new GridPoint();
+                    gp.position = center;
+                    gp.min = current;
+                    gp.cameraMin = Camera.main.WorldToScreenPoint(gp.min);
+                    gp.max = current + new Vector3(width, heigth, 0.0f);
+                    gp.cameraMax = Camera.main.WorldToScreenPoint(gp.max);
+                    gp.score = 0.0f;
+                    gp.x = x;
+                    gp.y = y;
+
+                    PlanGrid[y * 4 + x] = gp;
+                    current.x += width;
+                }
+                current.y += heigth;
+                current.x = min.x;
+            }
+        }
+
         static public void drawGrid()
         {
             Vector3 min = sFieldBounds.min;
@@ -144,6 +197,27 @@ namespace TeamAI
                 }
                 current.y += sGridHeight;
                 current.x = min.x;
+            }
+        }
+
+        static public void drawPlanGrid()
+        {
+            for (int y = 0; y < 3; y++)
+            {
+                for (int x = 0; x < 4; x++)
+                {
+                    GridPoint gp = PlanGrid[y * 4 + x];
+
+                    Vector3 leftTop = gp.min;
+                    Vector3 rightTop = gp.min + new Vector3(gp.max.x - gp.min.x, 0.0f, 0.0f);
+                    Vector3 leftBottom = gp.min + new Vector3(0.0f, gp.max.y - gp.min.y, 0.0f);
+                    Vector3 rightBottom = gp.max;
+
+                    Debug.DrawLine(leftTop, rightTop);
+                    Debug.DrawLine(rightTop, rightBottom);
+                    Debug.DrawLine(rightBottom, leftBottom);
+                    Debug.DrawLine(leftBottom, leftTop);
+                }
             }
         }
     }

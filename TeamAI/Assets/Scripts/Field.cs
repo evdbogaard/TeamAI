@@ -22,10 +22,21 @@ public class Field : MonoBehaviour
         }
 
         //TeamAI.Global.drawGrid();
+        TeamAI.Global.drawPlanGrid();
 	}
 
     void OnGUI()
     {
+        for (int y = 0; y < 3; y++)
+        {
+            for (int x = 0; x < 4; x++)
+            {
+                GridPoint gp = Global.PlanGrid[y * 4 + x];
+                Vector3 min = Camera.main.WorldToScreenPoint(gp.min);
+                GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
+            }
+        }
+
         if (!Global.DebugEnabled)
             return;
 

@@ -12,10 +12,18 @@ public class Manager : MonoBehaviour
     public int selectedFormation = 0;
     private int oldSelectedFormation = 0;
 
+    private List<Plan> m_offensivePlans;
+
+    private Plan m_currentPlan;
+    private Player m_support;
+
 	// Use this for initialization
 	void Start() 
     {
         m_fieldPlayers = new List<Player>();
+        m_offensivePlans = new List<Plan>();
+
+        m_currentPlan = null;
 
         m_currentFormation = Global.sFormations[0] as Formation;
 
@@ -27,6 +35,8 @@ public class Manager : MonoBehaviour
                 PlayerInfo pi = m_currentFormation.m_playersInfo[i] as PlayerInfo;
                 Vector3 temp = pi.position - new Vector3(36.0f, 68.0f, 0.0f);
                 temp.z = 0.0f;
+
+                player.coach = this;
 
                 // Field is 600 x 382
                 // Ingame X: 36 - 700 or -6 6
@@ -40,7 +50,44 @@ public class Manager : MonoBehaviour
                 player.designation = pi.designation.ToString();
                 m_fieldPlayers.Add(player);
             }
-        }        
+        }
+
+        //for (int i = 0; i < m_fieldPlayers.Count; i++)
+        //{
+            //float distSqr = (m_fieldPlayers[i].transform.position - Global.sBall.transform.position).sqrMagnitude;
+        //}
+
+        Global.sBall.controller = m_fieldPlayers[3];
+       
+        // Test Plan
+        Plan p = new Plan();
+        p.ballPos = 6;
+        p.teamPos = 7;
+        p.opponentPos = 11;
+        p.destinationPos = 3;
+
+        m_offensivePlans.Add(p);
+
+        Plan p2 = new Plan();
+        p2.ballPos = 5;
+        p2.teamPos = 1;
+        p2.opponentPos = 11;
+        p2.destinationPos = 2;
+        m_offensivePlans.Add(p2);
+
+        Plan p4 = new Plan();
+        p4.ballPos = 2;
+        p4.teamPos = 7;
+        p4.opponentPos = 11;
+        p4.destinationPos = 3;
+        m_offensivePlans.Add(p4);
+
+        Plan p3 = new Plan();
+        p3.ballPos = 3;
+        p3.teamPos = 6;
+        p3.opponentPos = 11;
+        p3.destinationPos = 7;
+        m_offensivePlans.Add(p3);
 	}
 	
 	// Update is called once per frame
@@ -68,7 +115,76 @@ public class Manager : MonoBehaviour
         //addScoreToGrid((Global.GridSizeY - 1) * Global.GridSizeX, 1.0f);
 
         calculateInfluenceMaps();
+
+        // Detect plan
+        if (m_currentPlan == null)
+        {
+            m_currentPlan = selectPlan(out m_support);
+        }
+        else
+        {
+            Vector3 destination = Global.PlanGrid[m_currentPlan.destinationPos].position;
+            float supportTime = m_support.timeToReachPos(destination);
+            float ballTime = Global.sBall.timeToReachTarget(destination, ((destination - Global.sBall.transform.position).normalized * 2.0f).magnitude);
+
+            if (supportTime < ballTime)
+            {
+                Global.sBall.kick(destination, 2.0f);
+            }
+
+            //Debug.Log("Support: " + supportTime.ToString());
+            //Debug.Log("Ball: " + ballTime.ToString());
+        }
 	}
+
+    public void newBallHolder()
+    {
+        m_currentPlan = null;
+    }
+
+    private Plan selectPlan(out Player supportPlayer)
+    {
+        // Find eligable plans;
+        int ballId = Global.planGridId(Global.sBall.transform.position);
+        supportPlayer = Global.sBall.controller;
+
+        // Find plan with correct BallID
+        for (int i = 0; i < m_offensivePlans.Count; i++)
+        {
+            Plan p = m_offensivePlans[i];
+            if (p.ballPos != ballId)
+                continue;
+
+            if (!Global.sBall.controllerInRange())
+                continue;
+
+            // find teammate positions
+            bool foundTeammate = false;
+            int teamId;
+            for (int t = 0; t < m_fieldPlayers.Count; t++)
+            {
+                if (m_fieldPlayers[t] == Global.sBall.controller)
+                    continue;
+
+                int tmp = Global.planGridId(m_fieldPlayers[t].transform.position);
+                if (p.teamPos == tmp)
+                {
+                    teamId = tmp;
+                    foundTeammate = true;
+                    supportPlayer = m_fieldPlayers[t];
+                    supportPlayer.setSupportRole(Global.PlanGrid[p.destinationPos].position);
+                    break;
+                }
+            }
+
+            if (!foundTeammate)
+                continue;
+
+            return p;
+        }
+
+        return null;
+    }
 
     private void calculateInfluenceMaps()
     {
