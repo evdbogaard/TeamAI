@@ -75,6 +75,9 @@ public class Ball : MonoBehaviour
     {
         Debug.Log(col.gameObject.name);
 
+        //if (col.gameObject.name == "Player_Red")
+        //    Debug.LogError("Test");
+
         if (!col.gameObject.name.Contains("Player"))
             return;
 

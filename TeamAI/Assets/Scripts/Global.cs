@@ -15,6 +15,8 @@ namespace TeamAI
         public float score;
         public int x;
         public int y;
+
+        public List<int> ids;
     }
 
     static public class Global
@@ -129,6 +131,8 @@ namespace TeamAI
                     gp.x = x;
                     gp.y = y;
 
+                    gp.ids = new List<int>();
+
                     Grid[y * GridSizeX + x] = gp;
                     current.x += sGridWidth;
                 }
@@ -175,6 +179,17 @@ namespace TeamAI
                     gp.x = x;
                     gp.y = y;
 
+                    gp.ids = new List<int>();
+                    for (int i = 0; i < GridSizeX * GridSizeY; i++)
+                    {
+                        GridPoint gp2 = Grid[i];
+                        if (gp2.position.x >= gp.min.x && gp2.position.x <= gp.max.x &&
+                            gp2.position.y >= gp.min.y && gp2.position.y <= gp.max.y)
+                        {
+                            gp.ids.Add(i);
+                        }
+                    }
+
                     PlanGrid[y * 4 + x] = gp;
                     current.x += width;
                 }
@@ -219,10 +234,10 @@ namespace TeamAI
                     Vector3 leftBottom = gp.min + new Vector3(0.0f, gp.max.y - gp.min.y, 0.0f);
                     Vector3 rightBottom = gp.max;
 
-                    Debug.DrawLine(leftTop, rightTop);
-                    Debug.DrawLine(rightTop, rightBottom);
-                    Debug.DrawLine(rightBottom, leftBottom);
-                    Debug.DrawLine(leftBottom, leftTop);
+                    Debug.DrawLine(leftTop, rightTop, Color.black);
+                    Debug.DrawLine(rightTop, rightBottom, Color.black);
+                    Debug.DrawLine(rightBottom, leftBottom, Color.black);
+                    Debug.DrawLine(leftBottom, leftTop, Color.black);
                 }
             }
         }

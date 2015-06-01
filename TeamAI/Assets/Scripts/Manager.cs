@@ -142,7 +142,7 @@ public class Manager : MonoBehaviour
             }
             else
             {
-                Vector3 destination = Global.PlanGrid[m_currentPlan.destinationPos].position;
+                Vector3 destination = m_support.m_planDesignation;// Global.PlanGrid[m_currentPlan.destinationPos].position;
                 float supportTime = m_support.timeToReachPos(destination);
                 float ballTime = Global.sBall.timeToReachTarget(destination, ((destination - Global.sBall.transform.position).normalized * 2.0f).magnitude);
 
@@ -203,11 +203,15 @@ public class Manager : MonoBehaviour
                 int tmp = Global.planGridId(m_fieldPlayers[t].transform.position);
                 if (p.teamPos == tmp)
                 {
-                    teamId = tmp;
-                    foundTeammate = true;
-                    supportPlayer = m_fieldPlayers[t];
-                    supportPlayer.setSupportRole(Global.PlanGrid[p.destinationPos].position);
-                    break;
+                    Vector3 dest;
+                    if (getSafePointInGrid(p.destinationPos, out dest))
+                    {
+                        teamId = tmp;
+                        foundTeammate = true;
+                        supportPlayer = m_fieldPlayers[t];
+                        supportPlayer.setSupportRole(dest);
+                        break;
+                    }
                 }
             }
 
@@ -218,6 +222,28 @@ public class Manager : MonoBehaviour
         }
 
         return null;
+    }
+
+    private bool getSafePointInGrid(int id, out Vector3 pos)
+    {
+        pos = Vector3.zero;
+        List<int> strategyGridIds = Global.PlanGrid[id].ids;
+        List<int> safeIds = new List<int>();
+        for (int i = 0; i < strategyGridIds.Count; i++)
+        {
+            if (Global.Grid[strategyGridIds[i]].score >= 0.0f)
+                safeIds.Add(strategyGridIds[i]);
+        }
+
+        if (safeIds.Count > 0)
+        {
+            System.Random r = new System.Random();
+            int randomOutcome = r.Next(0, safeIds.Count - 1);
+            pos = Global.Grid[safeIds[randomOutcome]].position;
+            return true;
+        }
+        else
+            return false;
     }
 
     private void calculateInfluenceMaps()

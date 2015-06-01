@@ -89,7 +89,7 @@ public class Player : MonoBehaviour
     {
         float distance = (pos - this.transform.position).magnitude;
 
-        float currentSpeed = (m_usingPlan) ? 1.5f : 0.0f;
+        float currentSpeed = (m_usingPlan) ? 1.5f : 1.0f;
 
         float time = distance / currentSpeed;
         

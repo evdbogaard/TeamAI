@@ -21,7 +21,7 @@ public class Field : MonoBehaviour
             Global.Grid[i].score = 0.0f;
         }
 
-        //TeamAI.Global.drawGrid();
+        TeamAI.Global.drawGrid();
         TeamAI.Global.drawPlanGrid();
 	}
 
@@ -59,7 +59,8 @@ public class Field : MonoBehaviour
                 //Vector3 min = Camera.main.WorldToScreenPoint(gp.min);// Camera.main.WorldToScreenPoint(gp.position - new Vector3(Global.sGridWidth / 2.0f, Global.sGridHeight / 2.0f, 0.0f));
                 //Vector3 max = Camera.main.WorldToScreenPoint(gp.max);// Camera.main.WorldToScreenPoint(gp.position + new Vector3(Global.sGridWidth / 2.0f, Global.sGridHeight / 2.0f, 0.0f));
 
-                GUI.Box(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), GUIContent.none);
+                GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y*Global.GridSizeX+gp.x).ToString());
+                //GUI.Box(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), GUIContent.none);
             }
         }
     }
