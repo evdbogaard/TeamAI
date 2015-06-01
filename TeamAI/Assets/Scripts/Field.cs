@@ -21,7 +21,7 @@ public class Field : MonoBehaviour
             Global.Grid[i].score = 0.0f;
         }
 
-        TeamAI.Global.drawGrid();
+        //TeamAI.Global.drawGrid();
         TeamAI.Global.drawPlanGrid();
 	}
 

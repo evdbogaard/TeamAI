@@ -14,7 +14,7 @@ public class Manager : MonoBehaviour
 
     public GameObject goal;
 
-    private List<Plan> m_offensivePlans;
+    //private List<Plan> m_offensivePlans;
 
     private Plan m_currentPlan;
     private Player m_support;
@@ -23,7 +23,7 @@ public class Manager : MonoBehaviour
 	void Start() 
     {
         m_fieldPlayers = new List<Player>();
-        m_offensivePlans = new List<Plan>();
+        //m_offensivePlans = new List<Plan>();
 
         m_currentPlan = null;
 
@@ -70,7 +70,7 @@ public class Manager : MonoBehaviour
             Global.sBall.controller = m_fieldPlayers[3];
        
         // Test Plan
-        Plan p = new Plan();
+        /*Plan p = new Plan();
         p.ballPos = 6;
         p.teamPos = 7;
         p.opponentPos = 11;
@@ -97,7 +97,7 @@ public class Manager : MonoBehaviour
         p3.teamPos = 6;
         p3.opponentPos = 11;
         p3.destinationPos = 7;
-        m_offensivePlans.Add(p3);
+        m_offensivePlans.Add(p3);*/
 	}
 	
 	// Update is called once per frame
@@ -125,6 +125,9 @@ public class Manager : MonoBehaviour
             }
         }
 
+        if (!m_fieldPlayers[0].m_runningGame)
+            return;
+
         int stop = 0;
         //Debug.Log(Input.mousePosition);
         //addScoreToGrid(0, 1.0f);
@@ -151,8 +154,34 @@ public class Manager : MonoBehaviour
                     Global.sBall.kick(destination, 2.0f);
                 }
 
-                //Debug.Log("Support: " + supportTime.ToString());
-                //Debug.Log("Ball: " + ballTime.ToString());
+                int ballId = Global.planGridId(Global.sBall.transform.position);
+                int defenceId = ballId - 1;
+                int closestDefender = 0;
+                float closestDistance = float.MaxValue;
+                for (int i = 0; i < m_fieldPlayers.Count; i++)
+                {
+                    if (m_fieldPlayers[i] == Global.sBall.controller)
+                        continue;
+
+                    if (m_fieldPlayers[i] == m_support)
+                        continue;
+
+                    if (m_fieldPlayers[i].designation == eDesignation.eDefender.ToString())
+                    {
+                        float dst = (m_fieldPlayers[i].transform.position - Global.PlanGrid[defenceId].position).sqrMagnitude;
+                        if (dst < closestDistance)
+                        {
+                            closestDefender = i;
+                            closestDistance = dst;
+                        }
+                    }
+                }
+
+                Vector3 newDest = Vector3.zero;
+                if (getSafePointInGrid(defenceId, out newDest))
+                {
+                    m_fieldPlayers[closestDefender].m_strategyDestination = newDest;
+                }
             }
         }
         else
@@ -183,9 +212,9 @@ public class Manager : MonoBehaviour
         supportPlayer = Global.sBall.controller;
 
         // Find plan with correct BallID
-        for (int i = 0; i < m_offensivePlans.Count; i++)
+        for (int i = 0; i < Global.sPlans.Count; i++)
         {
-            Plan p = m_offensivePlans[i];
+            Plan p = Global.sPlans[i];
             if (p.ballPos != ballId)
                 continue;
 

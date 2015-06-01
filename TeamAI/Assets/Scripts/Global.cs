@@ -39,6 +39,8 @@ namespace TeamAI
 
         public static GridPoint[] PlanGrid = new GridPoint[4 * 3];
 
+        public static List<Plan> sPlans;
+
         public static Manager CoachBlue;
         public static Manager CoachRed;
 
@@ -54,8 +56,10 @@ namespace TeamAI
 
 
             sFormations = new List<Formation>();
+            sPlans = new List<Plan>();
 
             loadFormations();
+            loadPlans();
             createStartegyGrid();
             createPlanGrid();
         }
@@ -103,6 +107,31 @@ namespace TeamAI
                 }
 
                 sFormations.Add(formation);
+            }
+        }
+
+        static public void loadPlans()
+        {
+            if (!System.IO.File.Exists("Assets/Scripts/Plans/Plans.xml"))
+                return;
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load("Assets/Scripts/Plans/Plans.xml");
+
+            XmlNodeList xmlPlans = doc.GetElementsByTagName("Plan");
+            for (int i = 0; i < xmlPlans.Count; i++)
+            {
+                XmlNode node = xmlPlans.Item(i);
+
+                Plan p = new Plan();
+                XmlNode child = node.FirstChild;
+                p.ballPos = System.Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                p.teamPos = System.Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                p.destinationPos = System.Convert.ToInt32(child.InnerText);
+
+                sPlans.Add(p);
             }
         }
 

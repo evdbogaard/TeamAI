@@ -108,9 +108,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Editor\EditorFormation.cs" />
+    <Compile Include="Assets\Editor\EditorPlan.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Formations\Formations.xml" />
+    <None Include="Assets\Scripts\Plans\Plans.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2013\UnityVS.CSharp.targets" />
 </Project>

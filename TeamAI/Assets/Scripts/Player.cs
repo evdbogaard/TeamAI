@@ -10,6 +10,9 @@ public class Player : MonoBehaviour
     public Vector3 m_planDesignation;
     public bool m_usingPlan;
 
+    public Vector3 m_strategyDestination;
+    public bool m_runningGame;
+
     public Player directOpponent;
 
     float maxSpeed = 1.0f;
@@ -25,6 +28,8 @@ public class Player : MonoBehaviour
         m_velocity = Vector3.zero;
         m_usingPlan = false;
         downTime = 0.0f;
+
+        m_runningGame = false;
 	}
 	
 	// Update is called once per frame
@@ -32,6 +37,17 @@ public class Player : MonoBehaviour
     {
         if (downTime > 0.0f)
             downTime -= Time.deltaTime;
+
+        if (!m_runningGame)
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+                m_runningGame = true;
+
+            m_strategyDestination = m_idlePosition;
+
+            moveTowards(m_idlePosition, 1.0f);
+            return;
+        }
 
         //this.transform.position = m_idlePosition;
         if (coach.teamControlsBall())
@@ -42,7 +58,7 @@ public class Player : MonoBehaviour
             }
             else if (Global.sBall.controller != this)
             {
-                moveTowards(m_idlePosition, 1.0f);
+                moveTowards(m_strategyDestination, 1.0f);
             }
             else
             {
