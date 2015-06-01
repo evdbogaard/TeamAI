@@ -81,6 +81,9 @@ public class Ball : MonoBehaviour
         if (col.gameObject.GetComponent<Player>().downTime > 0.0f)
             return;
 
+        if (!col.gameObject.GetComponent<Player>().coach.teamControlsBall())
+            return;
+
         velocity = Vector3.zero;
         this.controller = col.gameObject.GetComponent<Player>();
         this.controller.m_usingPlan = false;

@@ -10,6 +10,8 @@ public class Player : MonoBehaviour
     public Vector3 m_planDesignation;
     public bool m_usingPlan;
 
+    public Player directOpponent;
+
     float maxSpeed = 1.0f;
     Vector3 m_velocity;
 
@@ -32,24 +34,46 @@ public class Player : MonoBehaviour
             downTime -= Time.deltaTime;
 
         //this.transform.position = m_idlePosition;
-        if (m_usingPlan)
+        if (coach.teamControlsBall())
         {
-            moveTowards(m_planDesignation);
-        }
-        else if (Global.sBall.controller != this)
-        {
-            moveTowards(m_idlePosition);
+            if (m_usingPlan)
+            {
+                moveTowards(m_planDesignation, 1.5f);
+            }
+            else if (Global.sBall.controller != this)
+            {
+                moveTowards(m_idlePosition, 1.0f);
+            }
+            else
+            {
+                if (!Global.sBall.controllerInRange())
+                {
+                    moveTowards(Global.sBall.transform.position, 1.0f);
+                }
+                else if (Global.planGridId(Global.sBall.transform.position) == 7)
+                {
+                    //Debug.Log("Shot at goal");
+                    Global.sBall.kick(GameObject.Find("Goal_Red").transform.position, 2.0f);
+                }
+            }
         }
         else
         {
-            if (!Global.sBall.controllerInRange())
+            if (directOpponent == Global.sBall.controller)
             {
-                moveTowards(Global.sBall.transform.position);
+                Vector3 target = directOpponent.transform.position - coach.goal.transform.position;// -directOpponent.transform.position;
+                float distance = target.magnitude;
+                Vector3 targetN = target.normalized;
+
+                moveTowards(coach.goal.transform.position + targetN * distance * 0.5f, 1.0f);
             }
-            else if (Global.planGridId(Global.sBall.transform.position) == 7)
+            else
             {
-                Debug.Log("Shot at goal");
-                Global.sBall.kick(GameObject.Find("Goal_Red").transform.position, 2.0f);
+                Vector3 target = Global.sBall.transform.position - directOpponent.transform.position;
+                float distance = target.magnitude;
+                Vector3 targetN = target.normalized;
+
+                moveTowards(directOpponent.transform.position + targetN * distance * 0.35f, 1.0f);
             }
         }
 	}
@@ -65,19 +89,21 @@ public class Player : MonoBehaviour
     {
         float distance = (pos - this.transform.position).magnitude;
 
-        float time = distance / maxSpeed;
+        float currentSpeed = (m_usingPlan) ? 1.5f : 0.0f;
+
+        float time = distance / currentSpeed;
         
         return time;
     }
 
-    void moveTowards(Vector3 target)
+    void moveTowards(Vector3 target, float currentSpeed)
     {
         Vector3 toTarget = (target - this.transform.position);
         float distSqr = toTarget.sqrMagnitude;
 
         if (distSqr > 0.05f)
         {
-            Vector3 desiredVelocity = toTarget.normalized * maxSpeed;
+            Vector3 desiredVelocity = toTarget.normalized * currentSpeed;
             m_velocity = (desiredVelocity - m_velocity);
 
             this.transform.position = this.transform.position + desiredVelocity * Time.fixedDeltaTime;

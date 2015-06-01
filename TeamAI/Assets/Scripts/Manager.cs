@@ -12,6 +12,8 @@ public class Manager : MonoBehaviour
     public int selectedFormation = 0;
     private int oldSelectedFormation = 0;
 
+    public GameObject goal;
+
     private List<Plan> m_offensivePlans;
 
     private Plan m_currentPlan;
@@ -45,6 +47,14 @@ public class Manager : MonoBehaviour
                 //x = (x / 600.0f * 12.0f) - 6.0f;
                 //x = (x * 12.0f) - 6.0f;
 
+                if (this.name.Contains("Red"))
+                {
+                    x = -x;
+                    y = -y;
+
+                    player.directOpponent = Global.CoachBlue.FieldPlayers[i];
+                }
+
                 //Vector3 testCoord = Camera.main.ScreenToWorldPoint(temp);
                 player.IdlePosition = new Vector3(x, -y, 0.0f);
                 player.designation = pi.designation.ToString();
@@ -56,8 +66,8 @@ public class Manager : MonoBehaviour
         //{
             //float distSqr = (m_fieldPlayers[i].transform.position - Global.sBall.transform.position).sqrMagnitude;
         //}
-
-        Global.sBall.controller = m_fieldPlayers[3];
+        if (name.Contains("Blue"))
+            Global.sBall.controller = m_fieldPlayers[3];
        
         // Test Plan
         Plan p = new Plan();
@@ -103,6 +113,13 @@ public class Manager : MonoBehaviour
                 Player player = m_fieldPlayers[i] as Player;
                 float x = (pi.position.x / 600.0f * 12.0f) - 6.0f;
                 float y = (pi.position.y / 382.0f * 7.5f) - 3.75f;
+
+                if (this.name.Contains("Red"))
+                {
+                    x = -x;
+                    y = -y;
+                }
+
                 player.IdlePosition = new Vector3(x, -y, 0.0f);
                 player.designation = pi.designation.ToString();
             }
@@ -116,26 +133,43 @@ public class Manager : MonoBehaviour
 
         calculateInfluenceMaps();
 
-        // Detect plan
-        if (m_currentPlan == null)
+        if (teamControlsBall())
         {
-            m_currentPlan = selectPlan(out m_support);
+            // Detect plan
+            if (m_currentPlan == null)
+            {
+                m_currentPlan = selectPlan(out m_support);
+            }
+            else
+            {
+                Vector3 destination = Global.PlanGrid[m_currentPlan.destinationPos].position;
+                float supportTime = m_support.timeToReachPos(destination);
+                float ballTime = Global.sBall.timeToReachTarget(destination, ((destination - Global.sBall.transform.position).normalized * 2.0f).magnitude);
+
+                if (supportTime < ballTime)
+                {
+                    Global.sBall.kick(destination, 2.0f);
+                }
+
+                //Debug.Log("Support: " + supportTime.ToString());
+                //Debug.Log("Ball: " + ballTime.ToString());
+            }
         }
         else
         {
-            Vector3 destination = Global.PlanGrid[m_currentPlan.destinationPos].position;
-            float supportTime = m_support.timeToReachPos(destination);
-            float ballTime = Global.sBall.timeToReachTarget(destination, ((destination - Global.sBall.transform.position).normalized * 2.0f).magnitude);
-
-            if (supportTime < ballTime)
-            {
-                Global.sBall.kick(destination, 2.0f);
-            }
-
-            //Debug.Log("Support: " + supportTime.ToString());
-            //Debug.Log("Ball: " + ballTime.ToString());
+            // Defensive tactics
         }
 	}
+
+    public bool teamControlsBall()
+    {
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            if (m_fieldPlayers[i] == Global.sBall.controller)
+                return true;
+        }
+        return false;
+    }
 
     public void newBallHolder()
     {

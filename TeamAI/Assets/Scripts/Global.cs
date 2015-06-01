@@ -37,12 +37,18 @@ namespace TeamAI
 
         public static GridPoint[] PlanGrid = new GridPoint[4 * 3];
 
+        public static Manager CoachBlue;
+        public static Manager CoachRed;
+
         static public void init()
         {
             sField = GameObject.Find("Field");
             sFieldBounds = sField.GetComponent<Collider2D>().bounds;
 
             sBall = GameObject.Find("Ball").GetComponent<Ball>();
+
+            CoachBlue = GameObject.Find("Manager_Blue").GetComponent<Manager>();
+            CoachRed = GameObject.Find("Manager_Red").GetComponent<Manager>();
 
 
             sFormations = new List<Formation>();
