@@ -5,6 +5,7 @@ using TeamAI;
 public class Player : MonoBehaviour 
 {
     public Vector3 m_idlePosition;
+    public Vector3 m_startPosition;
     public string designation;
 
     public Vector3 m_planDesignation;
@@ -14,6 +15,11 @@ public class Player : MonoBehaviour
     public bool m_runningGame;
 
     public Player directOpponent;
+
+    public Vector3 m_target;
+
+    float m_normalSpeed = 1.0f;
+    float m_sprintSpeed = 1.5f;
 
     float maxSpeed = 1.0f;
     Vector3 m_velocity;
@@ -38,14 +44,19 @@ public class Player : MonoBehaviour
         if (downTime > 0.0f)
             downTime -= Time.deltaTime;
 
-        if (!m_runningGame)
+        if (m_usingPlan)
+            moveTowards(m_target, m_sprintSpeed);
+        else
+            moveTowards(m_target, m_normalSpeed);
+
+        /*if (!m_runningGame)
         {
             if (Input.GetKeyDown(KeyCode.Space))
                 m_runningGame = true;
 
             m_strategyDestination = m_idlePosition;
 
-            moveTowards(m_idlePosition, 1.0f);
+            moveTowards(m_startPosition, 1.0f);
             return;
         }
 
@@ -91,21 +102,31 @@ public class Player : MonoBehaviour
 
                 moveTowards(directOpponent.transform.position + targetN * distance * 0.35f, 1.0f);
             }
-        }
+        }*/
 	}
+
+    public void kickBall(Vector3 ballTarget)
+    {
+        if (Global.sBall.controllerInRange())
+        {
+            Vector3 dirN = (ballTarget - Global.sBall.transform.position).normalized;
+            Global.sBall.kick(ballTarget, 2.0f);
+        }
+    }
 
     public void setSupportRole(Vector3 destination)
     {
         Debug.Log(timeToReachPos(destination));
         m_usingPlan = true;
         m_planDesignation = destination;
+        m_target = destination;
     }
 
     public float timeToReachPos(Vector3 pos)
     {
         float distance = (pos - this.transform.position).magnitude;
 
-        float currentSpeed = (m_usingPlan) ? 1.5f : 1.0f;
+        float currentSpeed = (m_usingPlan) ? m_sprintSpeed : m_normalSpeed;
 
         float time = distance / currentSpeed;
         

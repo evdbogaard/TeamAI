@@ -131,8 +131,16 @@ public class EditorPlan : EditorWindow
                     int x = Mathf.FloorToInt(ballPos.x / field.width * 4.0f);
                     int y = Mathf.FloorToInt(3.0f - (ballPos.y / field.height * 3.0f));
 
+                    int teamX = Mathf.FloorToInt(beginPos.x / field.width * 4.0f);
+                    int teamY = Mathf.FloorToInt(3.0f - (beginPos.x / field.height * 3.0f));
+
+                    int destX = Mathf.FloorToInt(endPos.x / field.width * 4.0f);
+                    int destY = Mathf.FloorToInt(3.0f - (endPos.x / field.height * 3.0f));
+
                     Plan p = plans[currentSelectedPlan] as Plan;
                     p.ballPos = y * 4 + x;
+                    p.teamPos = teamY * 4 + teamX;
+                    p.destinationPos = destY * 4 + destX;
                 }
             }
 

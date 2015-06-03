@@ -22,18 +22,33 @@ public class Field : MonoBehaviour
         }
 
         //TeamAI.Global.drawGrid();
-        TeamAI.Global.drawPlanGrid();
+        //TeamAI.Global.drawPlanGrid();
 	}
 
+    public bool scored = false;
+    public bool failed = false;
     void OnGUI()
     {
+        if (failed)
+        {
+            GUIStyle test = new GUIStyle();
+            test.fontSize = 50;
+            GUI.Label(new Rect(300, 200, 100, 100), "FAILED!!!", test);
+        }
+        else if (scored)
+        {
+            GUIStyle test = new GUIStyle();
+            test.fontSize = 50;
+            GUI.Label(new Rect(300, 200, 100, 100), "GOAL!!!", test);
+        }
+
         for (int y = 0; y < 3; y++)
         {
             for (int x = 0; x < 4; x++)
             {
                 GridPoint gp = Global.PlanGrid[y * 4 + x];
                 Vector3 min = Camera.main.WorldToScreenPoint(gp.min);
-                GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
+                //GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
             }
         }
 

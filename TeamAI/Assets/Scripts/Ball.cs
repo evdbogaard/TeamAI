@@ -19,15 +19,16 @@ public class Ball : MonoBehaviour
 	// Update is called once per frame
 	void Update() 
     {
+
+	}
+
+    void FixedUpdate()
+    {
         if (velocity.sqrMagnitude > friction * friction)
         {
             velocity += velocity.normalized * friction * Time.fixedDeltaTime;
             this.transform.position = this.transform.position + velocity * Time.fixedDeltaTime;
         }
-	}
-
-    void FixedUpdate()
-    {
     }
 
     public void kick(Vector3 target, float strength)
@@ -75,14 +76,19 @@ public class Ball : MonoBehaviour
     {
         Debug.Log(col.gameObject.name);
 
+        if (col.gameObject.name.Contains("Goal"))
+        {
+            TeamAI.Global.sField.GetComponent<Field>().scored = true;
+        }
+
         if (col.gameObject.name == "Player_Red")
-            Debug.LogError("Ball Lost");
+            TeamAI.Global.sField.GetComponent<Field>().failed = true;
 
         if (!col.gameObject.name.Contains("Player"))
             return;
 
-        if (col.gameObject.GetComponent<Player>().downTime > 0.0f)
-            return;
+        //if (col.gameObject.GetComponent<Player>().downTime > 0.0f)
+        //    return;
 
         if (!col.gameObject.GetComponent<Player>().coach.teamControlsBall())
             return;

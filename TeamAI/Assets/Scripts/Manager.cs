@@ -47,16 +47,20 @@ public class Manager : MonoBehaviour
                 //x = (x / 600.0f * 12.0f) - 6.0f;
                 //x = (x * 12.0f) - 6.0f;
 
+                float startX = ((x + 5.5f) / 2.0f) - 5.5f;
+
                 if (this.name.Contains("Red"))
                 {
                     x = -x;
                     y = -y;
+                    startX = -startX;
 
                     player.directOpponent = Global.CoachBlue.FieldPlayers[i];
                 }
 
                 //Vector3 testCoord = Camera.main.ScreenToWorldPoint(temp);
                 player.IdlePosition = new Vector3(x, -y, 0.0f);
+                player.m_startPosition = new Vector3(startX, -y, 0.0f);
                 player.designation = pi.designation.ToString();
                 m_fieldPlayers.Add(player);
             }
@@ -114,18 +118,24 @@ public class Manager : MonoBehaviour
                 float x = (pi.position.x / 600.0f * 12.0f) - 6.0f;
                 float y = (pi.position.y / 382.0f * 7.5f) - 3.75f;
 
+                float startX = ((x + 5.5f) / 2.0f) - 5.5f;
+
                 if (this.name.Contains("Red"))
                 {
                     x = -x;
                     y = -y;
+                    startX = -startX;
                 }
 
                 player.IdlePosition = new Vector3(x, -y, 0.0f);
+                player.m_startPosition = new Vector3(startX, -y, 0.0f);
                 player.designation = pi.designation.ToString();
             }
         }
 
-        if (!m_fieldPlayers[0].m_runningGame)
+        calculateInfluenceMaps();
+
+        /*if (!m_fieldPlayers[0].m_runningGame)
             return;
 
         int stop = 0;
@@ -133,8 +143,6 @@ public class Manager : MonoBehaviour
         //addScoreToGrid(0, 1.0f);
         //addScoreToGrid(Global.GridSizeX + 1, 1.0f);
         //addScoreToGrid((Global.GridSizeY - 1) * Global.GridSizeX, 1.0f);
-
-        calculateInfluenceMaps();
 
         if (teamControlsBall())
         {
@@ -187,8 +195,219 @@ public class Manager : MonoBehaviour
         else
         {
             // Defensive tactics
-        }
+        }*/
 	}
+
+    public void setDirectOpponents()
+    {
+
+    }
+
+    public void setStartPositions()
+    {
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            m_fieldPlayers[i].m_target = m_fieldPlayers[i].m_startPosition;
+        }
+
+        if (teamControlsBall())
+        {
+            for (int i = 0; i < m_fieldPlayers.Count; i++)
+            {
+                if (m_fieldPlayers[i].designation == "eAttacker")
+                {
+                    m_fieldPlayers[i].m_target = Global.sBall.transform.position;
+                    Global.sBall.controller = m_fieldPlayers[i];
+                    break;
+                }
+            }
+        }
+    }
+
+    public bool teamInStartPosition()
+    {
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            if ((m_fieldPlayers[i].transform.position - m_fieldPlayers[i].m_target).sqrMagnitude > 0.1f)
+                return false;
+        }
+
+        return true;
+    }
+
+    public void calculateOffence()
+    {
+        if (Global.planGridId(Global.sBall.transform.position) == 7)
+        {
+            // hardcoded shoot
+            Global.sBall.controller.kickBall(Global.CoachRed.goal.transform.position);
+        }
+
+        if (m_currentPlan == null)
+        {
+            m_currentPlan = selectPlan(out m_support);
+        }
+        else
+        {
+            int stop = 0;
+
+            Vector3 destination = m_support.m_planDesignation;
+            float supportTime = m_support.timeToReachPos(destination);
+            float ballTime = Global.sBall.timeToReachTarget(destination, 2.0f);
+
+            if (supportTime < ballTime)
+            {
+                Global.sBall.controller.kickBall(destination);
+                //Global.sBall.kick(destination, 2.0f);
+            }
+        }
+
+        positionOffenceAttackers();
+        positionOffenceMidfielders();
+        positionOffenceDefenders();
+        checkMultipleInSameGrid();
+    }
+
+    private void positionToId(Vector3 pos, out int x, out int y)
+    {
+        int id = Global.planGridId(pos);
+
+        y = id / 4;
+        x = id - (y * 4);
+    }
+
+    private void checkMultipleInSameGrid()
+    {
+        List<int> occupyList = new List<int>();
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            if (m_fieldPlayers[i] == m_support || m_fieldPlayers[i] == Global.sBall.controller || m_fieldPlayers[i].designation != "eDefender")
+                continue;
+
+            Vector3 target = m_fieldPlayers[i].m_target;
+            int x = 0;
+            int y = 0;
+            positionToId(target, out x, out y);
+            int id = y * 4 + x;
+
+            if (!occupyList.Contains(id))
+            {
+                occupyList.Add(id);
+            }
+            else
+            {
+                if (y == 0)
+                    y += 1;
+                else if (y == 2)
+                    y -= 1;
+                else
+                {
+                    System.Random r = new System.Random();
+                    if (r.Next(0, 10) > 5)
+                        y += 1;
+                    else
+                        y -= 1;
+                }
+
+                Vector3 newTarget;
+                if (getSafePointInGrid(y * 4 + x, out newTarget))
+                    m_fieldPlayers[i].m_target = newTarget;
+            }
+        }
+    }
+
+    private void positionOffenceDefenders()
+    {
+        int ballX;
+        int ballY;
+        positionToId(Global.sBall.transform.position, out ballX, out ballY);
+
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            if (m_fieldPlayers[i] == m_support || m_fieldPlayers[i] == Global.sBall.controller)// || m_fieldPlayers[i].designation != "eDefender")
+                continue;
+
+            Vector3 target = m_fieldPlayers[i].m_target;
+            int x = 0;
+            int y = 0;
+            positionToId(target, out x, out y);
+
+            int newGridId = 0;
+
+            if (m_fieldPlayers[i].designation == "eDefender")
+            {
+                if (x == ballX - 1 && y == ballY ||
+                    x == ballX - 1 && y == ballY + 1 ||
+                    x == ballX - 1 && y == ballY - 1)
+                    continue;
+
+                newGridId = ballY * 4 + ballX - 1;
+            }
+            else if (m_fieldPlayers[i].designation == "eMidfielder")
+            {
+                if (x == ballX && y == ballY - 1 ||
+                    x == ballX && y == ballY + 1 ||
+                    x == ballX + 1 && y == ballY - 1 ||
+                    x == ballX + 1 && y == ballY ||
+                    x == ballX + 1 && y == ballY + 1)
+                    continue;
+
+                //if (ballX == 0)
+                    newGridId = y * 4 + x + 1;
+                //else if ((ballX == 1 || ballX == 2) && ballY )
+                //newGridId = 0;
+            }
+            else if (m_fieldPlayers[i].designation == "eAttacker")
+            {
+                if (x >= ballX + 1)
+                    continue;
+
+                if (ballX == 2)
+                    newGridId = y * 4 + x + 1;
+                else
+                    newGridId = y * 4 + x + 2;
+            }
+
+            Vector3 newTarget;
+            if (getSafePointInGrid(newGridId, out newTarget))
+                m_fieldPlayers[i].m_target = newTarget;
+        }
+    }
+
+    private void positionOffenceMidfielders()
+    {
+
+    }
+
+    private void positionOffenceAttackers()
+    {
+
+    }
+
+    public void calculateDefence()
+    {
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            if (m_fieldPlayers[i].directOpponent == Global.sBall.controller)
+            {
+                Vector3 target = m_fieldPlayers[i].directOpponent.transform.position - goal.transform.position;// -directOpponent.transform.position;
+                float distance = target.magnitude;
+                Vector3 targetN = target.normalized;
+
+                m_fieldPlayers[i].m_target = goal.transform.position + targetN * distance * 0.5f;// moveTowards(coach.goal.transform.position + targetN * distance * 0.5f, 1.0f);
+            }
+            else
+            {
+                Vector3 target = Global.sBall.transform.position - m_fieldPlayers[i].directOpponent.transform.position;
+                float distance = target.magnitude;
+                Vector3 targetN = target.normalized;
+
+                m_fieldPlayers[i].m_target = m_fieldPlayers[i].directOpponent.transform.position + targetN * distance * 0.35f;//
+
+                //moveTowards(directOpponent.transform.position + targetN * distance * 0.35f, 1.0f);
+            }
+        }
+    }
 
     public bool teamControlsBall()
     {
@@ -203,6 +422,7 @@ public class Manager : MonoBehaviour
     public void newBallHolder()
     {
         m_currentPlan = null;
+        m_support = null;
     }
 
     private Plan selectPlan(out Player supportPlayer)
