@@ -70,7 +70,7 @@ public class Manager : MonoBehaviour
         //{
             //float distSqr = (m_fieldPlayers[i].transform.position - Global.sBall.transform.position).sqrMagnitude;
         //}
-        if (name.Contains("Blue"))
+        if (name.Contains("Red"))
             Global.sBall.controller = m_fieldPlayers[3];
        
         // Test Plan
@@ -200,6 +200,31 @@ public class Manager : MonoBehaviour
 
     public void setDirectOpponents()
     {
+        List<Player> availableEnemyPlayers;
+        if (name.Contains("Blue"))
+            availableEnemyPlayers = new List<Player>(Global.CoachRed.FieldPlayers);
+        else
+            availableEnemyPlayers = new List<Player>(Global.CoachBlue.FieldPlayers);
+
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            // get closest enemy player
+            int id = 0;
+            float closestDist = float.MaxValue;
+            for (int j = 0; j < availableEnemyPlayers.Count; j++)
+            {
+                float dist = (m_fieldPlayers[i].transform.position - availableEnemyPlayers[j].transform.position).sqrMagnitude;
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    id = j;
+                }
+            }
+
+            m_fieldPlayers[i].directOpponent = availableEnemyPlayers[id];
+            availableEnemyPlayers.RemoveAt(id);
+        }
+
 
     }
 
@@ -235,12 +260,30 @@ public class Manager : MonoBehaviour
         return true;
     }
 
+    public int idToRed(int id)
+    {
+        if (name.Contains("Red"))
+        {
+            int newId = 0;
+            int y = id / 4;
+            int x = 3 - (id - (y * 4));
+
+            return y * 4 + x;
+        }
+        return id;
+    }
+
     public void calculateOffence()
     {
-        if (Global.planGridId(Global.sBall.transform.position) == 7)
+        int ballGridID = Global.planGridId(Global.sBall.transform.position);
+        ballGridID = idToRed(ballGridID);
+        if (ballGridID == 7)
         {
             // hardcoded shoot
-            Global.sBall.controller.kickBall(Global.CoachRed.goal.transform.position);
+            if (name.Contains("Red"))
+                Global.sBall.controller.kickBall(Global.CoachBlue.goal.transform.position);
+            else
+                Global.sBall.controller.kickBall(Global.CoachRed.goal.transform.position);
         }
 
         if (m_currentPlan == null)
@@ -274,6 +317,9 @@ public class Manager : MonoBehaviour
 
         y = id / 4;
         x = id - (y * 4);
+
+        if (name.Contains("Red"))
+            x = 3 - x;
     }
 
     private void checkMultipleInSameGrid()
@@ -333,6 +379,8 @@ public class Manager : MonoBehaviour
             positionToId(target, out x, out y);
 
             int newGridId = 0;
+            int newGridX = 0;
+            int newGridY = 0;
 
             if (m_fieldPlayers[i].designation == "eDefender")
             {
@@ -342,6 +390,8 @@ public class Manager : MonoBehaviour
                     continue;
 
                 newGridId = ballY * 4 + ballX - 1;
+                newGridX = ballX - 1;
+                newGridY = ballY;
             }
             else if (m_fieldPlayers[i].designation == "eMidfielder")
             {
@@ -354,6 +404,8 @@ public class Manager : MonoBehaviour
 
                 //if (ballX == 0)
                     newGridId = y * 4 + x + 1;
+                    newGridX = ballX + 1;
+                    newGridY = ballY;
                 //else if ((ballX == 1 || ballX == 2) && ballY )
                 //newGridId = 0;
             }
@@ -363,13 +415,24 @@ public class Manager : MonoBehaviour
                     continue;
 
                 if (ballX == 2)
+                {
                     newGridId = y * 4 + x + 1;
+                    newGridX = ballX + 1;
+                    newGridY = ballY;
+                }
                 else
+                {
                     newGridId = y * 4 + x + 2;
+                    newGridX = ballX + 2;
+                    newGridY = ballY;
+                }
             }
 
+            if (name.Contains("Red"))
+                newGridX = 3 - newGridX;
+
             Vector3 newTarget;
-            if (getSafePointInGrid(newGridId, out newTarget))
+            if (getSafePointInGrid(newGridY * 4 + newGridX, out newTarget))
                 m_fieldPlayers[i].m_target = newTarget;
         }
     }
@@ -429,9 +492,11 @@ public class Manager : MonoBehaviour
     {
         // Find eligable plans;
         int ballId = Global.planGridId(Global.sBall.transform.position);
+        ballId = idToRed(ballId);
         supportPlayer = Global.sBall.controller;
 
         // Find plan with correct BallID
+        List<Plan> possiblePlans = new List<Plan>();
         for (int i = 0; i < Global.sPlans.Count; i++)
         {
             Plan p = Global.sPlans[i];
@@ -441,8 +506,10 @@ public class Manager : MonoBehaviour
             if (!Global.sBall.controllerInRange())
                 continue;
 
+            possiblePlans.Add(p);
+
             // find teammate positions
-            bool foundTeammate = false;
+            /*bool foundTeammate = false;
             int teamId;
             for (int t = 0; t < m_fieldPlayers.Count; t++)
             {
@@ -450,24 +517,62 @@ public class Manager : MonoBehaviour
                     continue;
 
                 int tmp = Global.planGridId(m_fieldPlayers[t].transform.position);
+                tmp = idToRed(tmp);
                 if (p.teamPos == tmp)
                 {
+                    possiblePlans.Add(p);
+
                     Vector3 dest;
-                    if (getSafePointInGrid(p.destinationPos, out dest))
+                    if (getSafePointInGrid(idToRed(p.destinationPos), out dest))
                     {
                         teamId = tmp;
                         foundTeammate = true;
                         supportPlayer = m_fieldPlayers[t];
                         supportPlayer.setSupportRole(dest);
+                        //Debug.Log("Plan " + i);
                         break;
                     }
                 }
+            }*/
+
+            //if (!foundTeammate)
+            //    continue;
+
+            //return p;
+        }
+
+        //bool foundTeammate = false;
+        if (possiblePlans.Count != 0)
+        {
+            while (possiblePlans.Count != 0)
+            {
+                int result = Global.sRandom.Next(0, possiblePlans.Count - 1);
+                Plan p2 = possiblePlans[result];
+
+                int teamId;
+                for (int t = 0; t < m_fieldPlayers.Count; t++)
+                {
+                    if (m_fieldPlayers[t] == Global.sBall.controller)
+                        continue;
+
+                    int tmp = Global.planGridId(m_fieldPlayers[t].transform.position);
+                    tmp = idToRed(tmp);
+                    if (p2.teamPos == tmp)
+                    {
+                        Vector3 dest;
+                        if (getSafePointInGrid(idToRed(p2.destinationPos), out dest))
+                        {
+                            teamId = tmp;
+                            //foundTeammate = true;
+                            supportPlayer = m_fieldPlayers[t];
+                            supportPlayer.setSupportRole(dest);
+                            //Debug.Log("Plan " + i);
+                            return p2;
+                        }
+                    }
+                }
+                possiblePlans.Remove(p2);
             }
-
-            if (!foundTeammate)
-                continue;
-
-            return p;
         }
 
         return null;
@@ -476,12 +581,24 @@ public class Manager : MonoBehaviour
     private bool getSafePointInGrid(int id, out Vector3 pos)
     {
         pos = Vector3.zero;
+
+        if (id < 0 || id >= 4 * 3)
+            return false;
+
         List<int> strategyGridIds = Global.PlanGrid[id].ids;
         List<int> safeIds = new List<int>();
         for (int i = 0; i < strategyGridIds.Count; i++)
         {
-            if (Global.Grid[strategyGridIds[i]].score >= 0.0f)
-                safeIds.Add(strategyGridIds[i]);
+            if (name.Contains("Blue"))
+            {
+                if (Global.Grid[strategyGridIds[i]].score >= 0.0f)
+                    safeIds.Add(strategyGridIds[i]);
+            }
+            else
+            {
+                if (Global.Grid[strategyGridIds[i]].score <= 0.0f)
+                    safeIds.Add(strategyGridIds[i]);
+            }
         }
 
         if (safeIds.Count > 0)

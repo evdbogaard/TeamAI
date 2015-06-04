@@ -44,7 +44,9 @@ public class Player : MonoBehaviour
         if (downTime > 0.0f)
             downTime -= Time.deltaTime;
 
-        if (m_usingPlan)
+        if (Global.sBall.controller == this)
+            moveTowards(Global.sBall.transform.position, m_normalSpeed);
+        else if (m_usingPlan)
             moveTowards(m_target, m_sprintSpeed);
         else
             moveTowards(m_target, m_normalSpeed);
@@ -116,7 +118,7 @@ public class Player : MonoBehaviour
 
     public void setSupportRole(Vector3 destination)
     {
-        Debug.Log(timeToReachPos(destination));
+        //Debug.Log(timeToReachPos(destination));
         m_usingPlan = true;
         m_planDesignation = destination;
         m_target = destination;

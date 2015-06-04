@@ -22,14 +22,14 @@ public class Field : MonoBehaviour
         }
 
         //TeamAI.Global.drawGrid();
-        //TeamAI.Global.drawPlanGrid();
+        TeamAI.Global.drawPlanGrid();
 	}
 
     public bool scored = false;
     public bool failed = false;
     void OnGUI()
     {
-        if (failed)
+        /*if (failed)
         {
             GUIStyle test = new GUIStyle();
             test.fontSize = 50;
@@ -40,7 +40,12 @@ public class Field : MonoBehaviour
             GUIStyle test = new GUIStyle();
             test.fontSize = 50;
             GUI.Label(new Rect(300, 200, 100, 100), "GOAL!!!", test);
-        }
+        }*/
+
+        GUIStyle test = new GUIStyle();
+        test.fontSize = 50;
+        GUI.Label(new Rect(300, 25, 100, 100), Global.blueGoals.ToString(), test);
+        GUI.Label(new Rect(400, 25, 100, 100), Global.redGoals.ToString(), test);
 
         for (int y = 0; y < 3; y++)
         {
@@ -48,7 +53,7 @@ public class Field : MonoBehaviour
             {
                 GridPoint gp = Global.PlanGrid[y * 4 + x];
                 Vector3 min = Camera.main.WorldToScreenPoint(gp.min);
-                //GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
+                GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
             }
         }
 

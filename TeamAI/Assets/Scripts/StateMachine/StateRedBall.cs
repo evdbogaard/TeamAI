@@ -9,16 +9,19 @@ namespace TeamAI
         {
             //throw new System.NotImplementedException();
             Debug.Log("Entering RedBall");
+            Global.CoachBlue.setDirectOpponents();
         }
 
         public override void execute()
         {
-            throw new System.NotImplementedException();
+            Global.CoachRed.calculateOffence();
+            Global.CoachBlue.calculateDefence();
+            //throw new System.NotImplementedException();
         }
 
         public override void exit()
         {
-            throw new System.NotImplementedException();
+            //throw new System.NotImplementedException();
         }
     }
 }

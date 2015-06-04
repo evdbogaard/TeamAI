@@ -24,7 +24,12 @@ namespace TeamAI
         static public GameObject sField = null;
         static public Bounds sFieldBounds;
 
+        static public System.Random sRandom;
+
         static public Ball sBall = null;
+
+        static public int blueGoals = 0;
+        static public int redGoals = 0;
 
         static public float sGridWidth = 0.0f;
         static public float sGridHeight = 0.0f;
@@ -46,6 +51,8 @@ namespace TeamAI
 
         static public void init()
         {
+            sRandom = new System.Random(System.Guid.NewGuid().GetHashCode());
+
             sField = GameObject.Find("Field");
             sFieldBounds = sField.GetComponent<Collider2D>().bounds;
 

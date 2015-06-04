@@ -21,7 +21,7 @@ namespace TeamAI
 
         public override void exit()
         {
-            throw new System.NotImplementedException();
+            //throw new System.NotImplementedException();
         }
     }
 }

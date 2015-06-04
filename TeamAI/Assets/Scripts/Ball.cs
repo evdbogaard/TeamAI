@@ -9,6 +9,9 @@ public class Ball : MonoBehaviour
 
     bool kickonce = false;
 
+    float ballStealCooldownTime = 1.0f;
+    float currentStealTime = 0.0f;
+
 	// Use this for initialization
 	void Start() 
     {
@@ -19,7 +22,8 @@ public class Ball : MonoBehaviour
 	// Update is called once per frame
 	void Update() 
     {
-
+        if (currentStealTime > 0.0f)
+            currentStealTime -= Time.deltaTime;
 	}
 
     void FixedUpdate()
@@ -74,15 +78,29 @@ public class Ball : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D col)
     {
-        Debug.Log(col.gameObject.name);
+        //Debug.Log(col.gameObject.name);
 
         if (col.gameObject.name.Contains("Goal"))
         {
             TeamAI.Global.sField.GetComponent<Field>().scored = true;
+            velocity = Vector3.zero;
+            if (col.gameObject.name.Contains("Red"))
+            {
+                this.controller = TeamAI.Global.CoachRed.FieldPlayers[0];
+                this.transform.position = new Vector3(0.1f, 0.0f, 0.0f);
+                TeamAI.Global.blueGoals += 1;
+            }
+            else
+            {
+                this.controller = TeamAI.Global.CoachBlue.FieldPlayers[0];
+                this.transform.position = new Vector3(-0.1f, 0.0f, 0.0f);
+                TeamAI.Global.redGoals += 1;
+            }
+            GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new TeamAI.StateKickoff());
         }
 
-        if (col.gameObject.name == "Player_Red")
-            TeamAI.Global.sField.GetComponent<Field>().failed = true;
+        /*if (col.gameObject.name == "Player_Red")
+            TeamAI.Global.sField.GetComponent<Field>().failed = true;*/
 
         if (!col.gameObject.name.Contains("Player"))
             return;
@@ -90,13 +108,28 @@ public class Ball : MonoBehaviour
         //if (col.gameObject.GetComponent<Player>().downTime > 0.0f)
         //    return;
 
-        if (!col.gameObject.GetComponent<Player>().coach.teamControlsBall())
+        Player receiver = col.gameObject.GetComponent<Player>();
+
+        if (controllerInRange())
             return;
 
-        velocity = Vector3.zero;
-        this.controller = col.gameObject.GetComponent<Player>();
+        if (!receiver.coach.teamControlsBall() /*&& currentStealTime <= 0.0f*/)
+        {
+            currentStealTime = ballStealCooldownTime;
+            if (receiver.name.Contains("Red"))
+            {
+                GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new TeamAI.StateRedBall());
+            }
+            else
+            {
+                GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new TeamAI.StateBlueBall());
+            }
+        }
+
+        this.controller = receiver;
         this.controller.m_usingPlan = false;
         this.controller.coach.newBallHolder();
+        velocity = Vector3.zero;
     }
 
     void OnTriggerExit2D(Collider2D col)
