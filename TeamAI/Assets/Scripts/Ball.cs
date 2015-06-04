@@ -97,6 +97,7 @@ public class Ball : MonoBehaviour
                 TeamAI.Global.redGoals += 1;
             }
             GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new TeamAI.StateKickoff());
+            return;
         }
 
         /*if (col.gameObject.name == "Player_Red")

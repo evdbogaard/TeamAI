@@ -109,6 +109,7 @@
   <ItemGroup>
     <Compile Include="Assets\Editor\EditorFormation.cs" />
     <Compile Include="Assets\Editor\EditorPlan.cs" />
+    <Compile Include="Assets\Editor\EditorStrategy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Scripts\Formations\Formations.xml" />

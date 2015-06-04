@@ -27,7 +27,7 @@ public class Manager : MonoBehaviour
 
         m_currentPlan = null;
 
-        m_currentFormation = Global.sFormations[0] as Formation;
+        m_currentFormation = Global.sFormations[selectedFormation] as Formation;
 
         for (int i = 0; i < this.transform.childCount; i++)
         {
