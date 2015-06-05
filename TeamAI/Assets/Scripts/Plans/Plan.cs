@@ -15,6 +15,7 @@ namespace TeamAI
         public int teamPos;
         public int opponentPos;
         public int destinationPos;
+        public bool isRelative;
 
         public Plan()
         {
@@ -22,6 +23,7 @@ namespace TeamAI
             m_teamPos = new List<int>();
             m_opponentPos = new List<int>();
             m_destinationPos = new List<int>();
+            isRelative = false;
         }
     }
 }

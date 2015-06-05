@@ -45,6 +45,7 @@ namespace TeamAI
         public static GridPoint[] PlanGrid = new GridPoint[4 * 3];
 
         public static List<Plan> sPlans;
+        public static List<Plan> sRelativePlans;
 
         public static Manager CoachBlue;
         public static Manager CoachRed;
@@ -64,6 +65,7 @@ namespace TeamAI
 
             sFormations = new List<Formation>();
             sPlans = new List<Plan>();
+            sRelativePlans = new List<Plan>();
 
             loadFormations();
             loadPlans();
@@ -140,6 +142,13 @@ namespace TeamAI
 
                 sPlans.Add(p);
             }
+
+            Plan rel = new Plan();
+            rel.isRelative = true;
+            rel.ballPos = 5;
+            rel.teamPos = 0;
+            rel.destinationPos = 4;
+            sRelativePlans.Add(rel);
         }
 
         static private void createStartegyGrid()

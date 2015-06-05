@@ -559,15 +559,28 @@ public class Manager : MonoBehaviour
                     tmp = idToRed(tmp);
                     if (p2.teamPos == tmp)
                     {
-                        Vector3 dest;
-                        if (getSafePointInGrid(idToRed(p2.destinationPos), out dest))
+                        // calculate field control level
+                        float score = 0.0f;
+                        for (int i = 0; i < Global.PlanGrid[idToRed(p2.destinationPos)].ids.Count; i++)
                         {
-                            teamId = tmp;
-                            //foundTeammate = true;
-                            supportPlayer = m_fieldPlayers[t];
-                            supportPlayer.setSupportRole(dest);
-                            //Debug.Log("Plan " + i);
-                            return p2;
+                            score += Global.Grid[Global.PlanGrid[idToRed(p2.destinationPos)].ids[i]].score;
+                        }
+
+                        if (name.Contains("Red"))
+                            score *= -1.0f;
+
+                        if (score > 0.0f)
+                        {
+                            Vector3 dest;
+                            if (getSafePointInGrid(idToRed(p2.destinationPos), out dest))
+                            {
+                                teamId = tmp;
+                                //foundTeammate = true;
+                                supportPlayer = m_fieldPlayers[t];
+                                supportPlayer.setSupportRole(dest);
+                                //Debug.Log("Plan " + i);
+                                return p2;
+                            }
                         }
                     }
                 }
