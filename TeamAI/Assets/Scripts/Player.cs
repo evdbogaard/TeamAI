@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using TeamAI;
 
 public class Player : MonoBehaviour 
@@ -17,6 +18,7 @@ public class Player : MonoBehaviour
     public Player directOpponent;
 
     public Vector3 m_target;
+    public float lastRefresh;
 
     float m_normalSpeed = 1.0f;
     float m_sprintSpeed = 1.5f;
@@ -36,6 +38,7 @@ public class Player : MonoBehaviour
         downTime = 0.0f;
 
         m_runningGame = false;
+        lastRefresh = 0.0f;
 	}
 	
 	// Update is called once per frame
@@ -44,12 +47,19 @@ public class Player : MonoBehaviour
         if (downTime > 0.0f)
             downTime -= Time.deltaTime;
 
-        if (Global.sBall.controller == this)
-            moveTowards(Global.sBall.transform.position, m_normalSpeed);
-        else if (m_usingPlan)
+        lastRefresh += Time.deltaTime;
+
+        //if (Global.sBall.controller == this)
+        //    moveTowards(Global.sBall.transform.position, m_normalSpeed);
+        if (m_usingPlan)
             moveTowards(m_target, m_sprintSpeed);
         else
             moveTowards(m_target, m_normalSpeed);
+
+        if (this == Global.sBall.controller)
+        {
+            int stop = 0;
+        }
 
         /*if (!m_runningGame)
         {
@@ -142,10 +152,62 @@ public class Player : MonoBehaviour
 
         if (distSqr > 0.05f)
         {
-            Vector3 desiredVelocity = toTarget.normalized * currentSpeed;
+            Vector3 desiredVelocity = toTarget.normalized;
             m_velocity = (desiredVelocity - m_velocity);
 
-            this.transform.position = this.transform.position + desiredVelocity * Time.fixedDeltaTime;
+            Vector3 pos = this.transform.position;
+            Vector3 ahead = pos + (target - pos).normalized * 1.0f; // MAX_SEE_AHEAD
+            Vector3 ahead2 = pos + (target - pos).normalized * 0.5f;
+            Vector3 ahead3 = pos + (target - pos).normalized * 0.1f;
+
+            //Debug.DrawLine(pos, ahead2);
+
+            List<Player> obstacles = new List<Player>();
+            //if (coach.name.Contains("Red"))
+                obstacles.AddRange(Global.CoachBlue.FieldPlayers);
+            //else
+                obstacles.AddRange(Global.CoachRed.FieldPlayers);
+
+            int mostDangerousOpponent = -1;
+            for (int i = 0; i < obstacles.Count; i++)
+            {
+                Vector3 opp = obstacles[i].transform.position;
+
+                float dist1 = (opp - ahead).magnitude;
+                float dist2 = (opp - ahead2).magnitude;
+                float dist3 = (opp - ahead3).magnitude;
+                float dist4 = (opp - this.transform.position).magnitude;
+
+                float radius = 0.5f;
+                if (dist1 <= radius || dist2 <= radius || dist3 <= radius || dist4 <= radius)
+                {
+                    if (mostDangerousOpponent == -1)
+                    {
+                        mostDangerousOpponent = i;
+                    }
+                    else if ((obstacles[mostDangerousOpponent].transform.position - pos).sqrMagnitude < (opp - pos).sqrMagnitude)
+                    {
+                        mostDangerousOpponent = i;
+                    }
+                }
+            }
+
+            Vector3 result = (target - pos).normalized;
+            Vector3 avoidance = Vector3.zero;
+            if (Global.sBall.controller != this && mostDangerousOpponent != -1)
+            {
+                avoidance = Vector3.zero;
+                avoidance.x = ahead.x - obstacles[mostDangerousOpponent].transform.position.x;
+                avoidance.y = ahead.y - obstacles[mostDangerousOpponent].transform.position.y;
+                avoidance.Normalize();
+
+                avoidance = avoidance * 1.0f;
+
+                result = (result + avoidance).normalized;
+
+            }
+
+            this.transform.position = this.transform.position + (desiredVelocity + avoidance).normalized * currentSpeed * Time.fixedDeltaTime;
         }
         else
             m_velocity = Vector3.zero;
@@ -157,5 +219,16 @@ public class Player : MonoBehaviour
     {
         get { return m_idlePosition; }
         set { m_idlePosition = value; }
+    }
+
+    void OnTriggerStay2D(Collider2D col)
+    {
+        if (col.gameObject.name.Contains("Player"))
+        {
+            //Debug.Log(col.gameObject.name);
+            Vector3 pos = this.transform.position;
+            Vector3 opp = col.gameObject.transform.position;
+            this.moveTowards(pos + (pos - opp).normalized, m_normalSpeed);
+        }
     }
 }

@@ -10,6 +10,7 @@ namespace TeamAI
             //throw new System.NotImplementedException();
             Debug.Log("Entering BlueBall");
             Global.CoachRed.setDirectOpponents();
+            Global.gameRunning = true;
         }
 
         public override void execute()

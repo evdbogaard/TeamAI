@@ -231,6 +231,8 @@ public class EditorPlan : EditorWindow
         p.teamPos = EditorGUILayout.IntField("Teammate Position", p.teamPos);
         p.destinationPos = EditorGUILayout.IntField("Teammate Destination", p.destinationPos);
 
+        EditorGUILayout.Toggle("Is relative", false);
+
         if (GUILayout.Button("Save"))
         {
             saveToXML();

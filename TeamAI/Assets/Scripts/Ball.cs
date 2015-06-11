@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using TeamAI;
 
 public class Ball : MonoBehaviour 
 {
@@ -7,7 +8,10 @@ public class Ball : MonoBehaviour
     public float friction;
     public Vector3 velocity;
 
+    private Vector3 m_previousPosition;
+
     bool kickonce = false;
+    float ballStillTimer;
 
     float ballStealCooldownTime = 1.0f;
     float currentStealTime = 0.0f;
@@ -17,6 +21,8 @@ public class Ball : MonoBehaviour
     {
         velocity = Vector3.zero;
         friction = -0.15f;
+        m_previousPosition = this.transform.position;
+        ballStillTimer = 0.0f;
 	}
 	
 	// Update is called once per frame
@@ -24,6 +30,37 @@ public class Ball : MonoBehaviour
     {
         if (currentStealTime > 0.0f)
             currentStealTime -= Time.deltaTime;
+
+        if (Global.gameRunning)
+        {
+            if (this.transform.position == m_previousPosition)
+            {
+                ballStillTimer += Time.deltaTime;
+                //Debug.Log(ballStillTimer);
+                if (ballStillTimer > 5.0f)
+                {
+                    ballStillTimer = 0.0f;
+                    if (Global.CoachBlue.teamControlsBall())
+                    {
+                        this.controller = Global.CoachRed.FieldPlayers[0];
+                        Global.CoachRed.newBallHolder();
+                    }
+                    else
+                    {
+                        this.controller = Global.CoachBlue.FieldPlayers[0];
+                        Global.CoachBlue.newBallHolder();
+                    }
+                    GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new StateFreeKick());
+                }
+            }
+            else
+            {
+                m_previousPosition = this.transform.position;
+                ballStillTimer = 0.0f;
+            }
+        }
+        else
+            ballStillTimer = 0.0f;
 	}
 
     void FixedUpdate()
@@ -79,6 +116,8 @@ public class Ball : MonoBehaviour
     void OnTriggerEnter2D(Collider2D col)
     {
         //Debug.Log(col.gameObject.name);
+        if (!Global.gameRunning)
+            return;
 
         if (col.gameObject.name.Contains("Goal"))
         {
@@ -88,12 +127,14 @@ public class Ball : MonoBehaviour
             {
                 this.controller = TeamAI.Global.CoachRed.FieldPlayers[0];
                 this.transform.position = new Vector3(0.1f, 0.0f, 0.0f);
+                this.controller.coach.newBallHolder();
                 TeamAI.Global.blueGoals += 1;
             }
             else
             {
                 this.controller = TeamAI.Global.CoachBlue.FieldPlayers[0];
                 this.transform.position = new Vector3(-0.1f, 0.0f, 0.0f);
+                this.controller.coach.newBallHolder();
                 TeamAI.Global.redGoals += 1;
             }
             GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new TeamAI.StateKickoff());
@@ -138,6 +179,39 @@ public class Ball : MonoBehaviour
         if (col.gameObject.name.Contains("Player"))
         {
             col.gameObject.GetComponent<Player>().downTime = 1.0f;
+        }
+
+        if (col.gameObject.name.Contains("Field"))
+        {
+            if (this.transform.position.y < Global.sFieldBounds.min.y)
+            {
+                this.transform.position = new Vector3(transform.position.x, Global.sFieldBounds.min.y + 0.1f, 0.0f);
+            }
+            else if (this.transform.position.y > Global.sFieldBounds.max.y)
+            {
+                this.transform.position = new Vector3(transform.position.x, Global.sFieldBounds.max.y - 0.1f, 0.0f);
+            }
+            else if (this.transform.position.x < Global.sFieldBounds.min.x)
+            {
+                this.transform.position = new Vector3(Global.sFieldBounds.min.x + 0.1f, transform.position.y, 0.0f);
+            }
+            else if (this.transform.position.y < Global.sFieldBounds.max.x)
+            {
+                this.transform.position = new Vector3(Global.sFieldBounds.max.x - 0.1f, transform.position.y, 0.0f);
+            }
+
+            velocity = Vector3.zero;
+            if (Global.CoachBlue.teamControlsBall())
+            {
+                this.controller = Global.CoachRed.FieldPlayers[0];
+                Global.CoachRed.newBallHolder();
+            }
+            else
+            {
+                this.controller = Global.CoachBlue.FieldPlayers[0];
+                Global.CoachBlue.newBallHolder();
+            }
+            col.gameObject.GetComponent<GameStateManager>().changeState(new StateFreeKick());
         }
     }
 }

@@ -3,23 +3,34 @@ using System.Collections;
 
 namespace TeamAI
 {
-    public class StateKickoff : State
+    public class StateFreeKick : State
     {
+        float timer = 0.0f;
         public override void enter()
         {
-            //throw new System.NotImplementedException();
-            Debug.Log("Entering Kickoff");
-
-            Global.CoachBlue.setStartPositions();
-            Global.CoachRed.setStartPositions();
-
+            Debug.Log("Entering freekick");
+            timer = 3.0f;
             Global.gameRunning = false;
+            //throw new System.NotImplementedException();
         }
 
         public override void execute()
         {
-            if (Global.CoachBlue.teamInStartPosition() && 
-                Global.CoachRed.teamInStartPosition())
+            timer -= Time.deltaTime;
+
+            if (Global.CoachBlue.teamControlsBall())
+            {
+                Global.CoachBlue.calculateOffence();
+                Global.CoachRed.calculateDefence();
+            }
+            else
+            {
+                Global.CoachBlue.calculateDefence();
+                Global.CoachRed.calculateDefence();
+            }
+
+
+            if (timer < 0.0f)
             {
                 State newState;
                 if (Global.CoachBlue.teamControlsBall())
@@ -28,13 +39,12 @@ namespace TeamAI
                     newState = new StateRedBall();
                 GameObject.Find("Field").GetComponent<GameStateManager>().changeState(newState);
             }
-
-            //Debug.Log("Test");
             //throw new System.NotImplementedException();
         }
 
         public override void exit()
         {
+            Global.gameRunning = true;
             //throw new System.NotImplementedException();
         }
     }

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
+using System;
 
 namespace TeamAI
 {
@@ -30,6 +31,7 @@ namespace TeamAI
 
         static public int blueGoals = 0;
         static public int redGoals = 0;
+        static public bool gameRunning = false;
 
         static public float sGridWidth = 0.0f;
         static public float sGridHeight = 0.0f;
@@ -41,6 +43,7 @@ namespace TeamAI
 
         public static GridPoint[] Grid = new GridPoint[GridSizeX * GridSizeY];
         public static List<Formation> sFormations;
+        public static List<Strategy> sStrategies;
 
         public static GridPoint[] PlanGrid = new GridPoint[4 * 3];
 
@@ -64,10 +67,12 @@ namespace TeamAI
 
 
             sFormations = new List<Formation>();
+            sStrategies = new List<Strategy>();
             sPlans = new List<Plan>();
             sRelativePlans = new List<Plan>();
 
             loadFormations();
+            loadStrategies();
             loadPlans();
             createStartegyGrid();
             createPlanGrid();
@@ -119,6 +124,52 @@ namespace TeamAI
             }
         }
 
+        static public void loadStrategies()
+        {
+            if (!System.IO.File.Exists("Assets/Scripts/Strategies/Strategies.xml"))
+                return;
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load("Assets/Scripts/Strategies/Strategies.xml");
+
+            XmlNodeList strategyList = doc.GetElementsByTagName("Strategy");
+
+            for (int i = 0; i < strategyList.Count; i++)
+            {
+                XmlNode node = strategyList.Item(i);
+                Strategy s = new Strategy();
+                XmlNode child = node.FirstChild;
+                s.formation = Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                s.risk = Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                s.attackLine = Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                s.midfieldLine = Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                s.defendLine = Convert.ToInt32(child.InnerText);
+                //child = child.NextSibling;
+
+                //formation.m_playersInfo = new List<PlayerInfo>();
+                for (int j = 0; j < 5; j++)
+                {
+                    child = child.NextSibling;
+
+                    PersonalBehavior pb = new PersonalBehavior();
+                    pb.behavior = Convert.ToInt32(child.FirstChild.InnerText);
+                    pb.zoneID = Convert.ToInt32(child.FirstChild.NextSibling.InnerText);
+
+                    s.m_personal.Add(pb);
+                }
+                sStrategies.Add(s);
+            }
+
+            //Formation formation = new Formation();
+            //formation.FormationName = formationList[0].FirstChild.InnerText;
+
+            int stop = 0;
+        }
+
         static public void loadPlans()
         {
             if (!System.IO.File.Exists("Assets/Scripts/Plans/Plans.xml"))
@@ -145,9 +196,43 @@ namespace TeamAI
 
             Plan rel = new Plan();
             rel.isRelative = true;
-            rel.ballPos = 5;
-            rel.teamPos = 0;
-            rel.destinationPos = 4;
+            rel.ballPos = 0;
+            rel.teamPos = -1;
+            rel.destinationPos = -1;
+            //sRelativePlans.Add(rel);
+
+            Plan rel2 = new Plan();
+            rel2.isRelative = true;
+            rel2.ballPos = 0;
+            rel2.teamPos = 4;
+            rel2.destinationPos = 4;
+            //sRelativePlans.Add(rel2);
+
+            Plan rel3 = new Plan();
+            rel3.isRelative = true;
+            rel3.ballPos = 0;
+            rel3.teamPos = -4;
+            rel3.destinationPos = -4;
+            //sRelativePlans.Add(rel3);
+
+            Plan rel4 = new Plan();
+            rel4.isRelative = true;
+            rel4.ballPos = 0;
+            rel4.teamPos = 5;
+            rel4.destinationPos = 5;
+            //sRelativePlans.Add(rel4);
+
+            Plan rel5 = new Plan();
+            rel5.isRelative = true;
+            rel5.ballPos = 0;
+            rel5.teamPos = 1;
+            rel5.destinationPos = -3;
+            //sRelativePlans.Add(rel5);
+
+            sRelativePlans.Add(rel5);
+            sRelativePlans.Add(rel4);
+            sRelativePlans.Add(rel3);
+            sRelativePlans.Add(rel2);
             sRelativePlans.Add(rel);
         }
 

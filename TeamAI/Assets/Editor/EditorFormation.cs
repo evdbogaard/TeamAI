@@ -32,7 +32,7 @@ public class EditorFormation : EditorWindow
         infoWindowRect = new Rect(field.width + 20.0f, 10.0f, 200.0f, 300.0f);
         controlWindowRect = new Rect(10.0f, 10.0f, 200.0f, 300.0f);
 
-        minSize = new Vector2(field.width + infoWindowRect.width + 25.0f, minSize.y);
+        //minSize = new Vector2(field.width + infoWindowRect.width + 25.0f, minSize.y);
         players = new ArrayList();
 
         formations = new ArrayList();
@@ -127,6 +127,8 @@ public class EditorFormation : EditorWindow
             oldNumberOfPlayer = 0;
             numberOfPlayers = 0;
         }
+
+        GUILayout.Button("Remove");
 
         List<string> formationNames = new List<string>();
         for (int i = 0; i < formations.Count; i++)
