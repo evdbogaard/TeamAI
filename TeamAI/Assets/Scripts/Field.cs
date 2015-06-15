@@ -21,6 +21,23 @@ public class Field : MonoBehaviour
             Global.Grid[i].score = 0.0f;
         }
 
+        if (Global.gameTime < 0.0f)
+        {
+            if (Global.firstHalf)
+            {
+                Global.firstHalf = false;
+                Global.gameTime = 150.0f;
+                this.GetComponent<GameStateManager>().changeState(new StateKickoff());
+                Global.sBall.transform.position = new Vector3(-0.1f, 0.0f, 0.0f);
+                Global.sBall.controller = Global.CoachBlue.FieldPlayers[3];
+                Global.sBall.controller.coach.newBallHolder();
+                Global.sBall.velocity = Vector3.zero;
+            }
+            Debug.Break();
+        }
+
+
+
         //TeamAI.Global.drawGrid();
         TeamAI.Global.drawPlanGrid();
 	}
@@ -46,6 +63,7 @@ public class Field : MonoBehaviour
         test.fontSize = 50;
         GUI.Label(new Rect(300, 25, 100, 100), Global.blueGoals.ToString(), test);
         GUI.Label(new Rect(400, 25, 100, 100), Global.redGoals.ToString(), test);
+        GUI.Label(new Rect(350, 10, 100, 100), Global.gameTime.ToString(), test);
 
         for (int y = 0; y < 3; y++)
         {
@@ -53,7 +71,7 @@ public class Field : MonoBehaviour
             {
                 GridPoint gp = Global.PlanGrid[y * 4 + x];
                 Vector3 min = Camera.main.WorldToScreenPoint(gp.min);
-                GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
+                //GUI.Label(new Rect(gp.cameraMin.x, (Screen.height - gp.cameraMin.y) - (gp.cameraMax.y - gp.cameraMin.y), gp.cameraMax.x - gp.cameraMin.x, gp.cameraMax.y - gp.cameraMin.y), (gp.y * 4 + gp.x).ToString());
             }
         }
 

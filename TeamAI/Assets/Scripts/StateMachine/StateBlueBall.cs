@@ -16,6 +16,9 @@ namespace TeamAI
         public override void execute()
         {
             //throw new System.NotImplementedException();
+            Global.CoachBlue.m_statistics.timeInPossession += Time.deltaTime;
+            Global.gameTime -= Time.deltaTime;
+
             Global.CoachBlue.calculateOffence();
             Global.CoachRed.calculateDefence();
         }

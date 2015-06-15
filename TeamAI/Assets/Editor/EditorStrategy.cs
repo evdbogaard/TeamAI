@@ -20,6 +20,7 @@ public class EditorStrategy : EditorWindow
 
     Rect generalWindowRect;
     Rect personalWindowRect;
+    Rect ControlWindowRect;
 
     List<Formation> formations;
     int currentSelectedPlayer = 0;
@@ -32,6 +33,7 @@ public class EditorStrategy : EditorWindow
         player = (Resources.LoadAssetAtPath("Assets/Textures/EditorPlayer.png", typeof(Sprite)) as Sprite).texture;
         generalWindowRect = new Rect(field.width + 20.0f, 10.0f, 200.0f, 300.0f);
         personalWindowRect = new Rect(10.0f, 10.0f, 200.0f, 200.0f);
+        ControlWindowRect = new Rect(10.0f, 10.0f, 200.0f, 300.0f);
 
         formations = new List<Formation>();
 
@@ -95,6 +97,47 @@ public class EditorStrategy : EditorWindow
         int stop = 0;
     }
 
+    void controlWindow(int windowID)
+    {
+        //textField = GUILayout.TextField(textField);
+
+        if (GUILayout.Button("Add"))
+        {
+            Strategy s = new Strategy();
+            s.m_personal.Add(new PersonalBehavior());
+            s.m_personal.Add(new PersonalBehavior());
+            s.m_personal.Add(new PersonalBehavior());
+            s.m_personal.Add(new PersonalBehavior());
+            s.m_personal.Add(new PersonalBehavior());
+            strategies.Add(s);
+            //Formation f = new Formation();
+            //f.FormationName = textField;
+            //formations.Add(f);
+
+            //currentSelectedFormation = formations.Count - 1;
+            //oldNumberOfPlayer = 0;
+            //numberOfPlayers = 0;
+        }
+
+        GUILayout.Button("Remove");
+
+        List<string> arrayNames = new List<string>();
+        for (int i = 0; i < strategies.Count; i++)
+        {
+            arrayNames.Add(i.ToString());
+        }
+
+
+
+        currentSelectedStrategy = EditorGUILayout.Popup(currentSelectedStrategy, arrayNames.ToArray());
+
+
+
+
+
+        GUI.DragWindow();
+    }
+
     void loadXML()
     {
         if (!System.IO.File.Exists("Assets/Scripts/Strategies/Strategies.xml"))
@@ -129,6 +172,7 @@ public class EditorStrategy : EditorWindow
                 PersonalBehavior pb = new PersonalBehavior();
                 pb.behavior = Convert.ToInt32(child.FirstChild.InnerText);
                 pb.zoneID = Convert.ToInt32(child.FirstChild.NextSibling.InnerText);
+                pb.typeToDefend = Convert.ToInt32(child.FirstChild.NextSibling.NextSibling.InnerText);
 
                 s.m_personal.Add(pb);
             }
@@ -175,8 +219,9 @@ public class EditorStrategy : EditorWindow
         }
 
         BeginWindows();
-        generalWindowRect = GUI.Window(0, generalWindowRect, generalWindow, "General");
+        generalWindowRect = GUI.Window(0, generalWindowRect, generalWindow, "Strategy");
         personalWindowRect = GUI.Window(1, personalWindowRect, personalWindow, "Personal");
+        ControlWindowRect = GUI.Window(2, ControlWindowRect, controlWindow, "General");
         EndWindows();
 
         float w = field.width / 4.0f;
@@ -244,7 +289,12 @@ public class EditorStrategy : EditorWindow
         switch (pb.behavior)
         {
             case 0:
-                EditorGUILayout.EnumPopup(eDesignation.eAttacker);
+                //EditorGUILayout.EnumPopup(eDesignation.eAttacker);
+                List<string> test = new List<string>();
+                test.Add("Defender");
+                test.Add("Midfielder");
+                test.Add("Attacker");
+                pb.typeToDefend = EditorGUILayout.Popup(pb.typeToDefend, test.ToArray());
                 break;
             case 1:
                 //EditorGUILayout.
@@ -330,6 +380,10 @@ public class EditorStrategy : EditorWindow
 
                 xml.WriteStartElement("zoneID");
                 xml.WriteString(pb.zoneID.ToString());
+                xml.WriteEndElement();
+
+                xml.WriteStartElement("defendType");
+                xml.WriteString(pb.typeToDefend.ToString());
                 xml.WriteEndElement();
 
                 xml.WriteEndElement();

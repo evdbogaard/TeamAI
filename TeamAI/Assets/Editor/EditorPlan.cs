@@ -7,7 +7,7 @@ using System.Xml;
 
 public class EditorPlan : EditorWindow 
 {
-    [MenuItem ("TeamAI/Plan")]
+    [MenuItem ("TeamAI/Play")]
     public static void ShowWindow()
     {
         EditorWindow.GetWindow(typeof(EditorPlan));
@@ -215,8 +215,8 @@ public class EditorPlan : EditorWindow
 
 
         BeginWindows();
-        infoWindowRect = GUI.Window(0, infoWindowRect, infoWindow, "Info");
-        controlWindowRect = GUI.Window(1, controlWindowRect, controlWindow, "Control");
+        infoWindowRect = GUI.Window(0, infoWindowRect, infoWindow, "Play");
+        controlWindowRect = GUI.Window(1, controlWindowRect, controlWindow, "General");
         EndWindows();
     }
 
@@ -311,6 +311,8 @@ public class EditorPlan : EditorWindow
             Plan p = new Plan();
             plans.Add(p);
         }
+
+        GUILayout.Button("Remove");
 
         GUI.DragWindow();
     }

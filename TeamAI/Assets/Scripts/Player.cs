@@ -56,11 +56,6 @@ public class Player : MonoBehaviour
         else
             moveTowards(m_target, m_normalSpeed);
 
-        if (this == Global.sBall.controller)
-        {
-            int stop = 0;
-        }
-
         /*if (!m_runningGame)
         {
             if (Input.GetKeyDown(KeyCode.Space))
@@ -121,9 +116,44 @@ public class Player : MonoBehaviour
     {
         if (Global.sBall.controllerInRange())
         {
-            Vector3 dirN = (ballTarget - Global.sBall.transform.position).normalized;
+            Vector3 dir = (ballTarget - Global.sBall.transform.position);
+            Vector3 dirN = dir.normalized;
+
+            Quaternion rotationTop = Quaternion.Euler(0.0f, 0.0f, 10.0f);
+            Quaternion rotationBottom = Quaternion.Euler(0.0f, 0.0f, -10.0f);
+            Vector3 dirTop = rotationTop * dir;
+            Vector3 dirBot = rotationBottom * dir;
+
+            // Check direct interception possibility
+            RaycastHit2D hit = Physics2D.Raycast(Global.sBall.transform.position, dirN, dir.magnitude);
+            RaycastHit2D hit2 = Physics2D.Raycast(Global.sBall.transform.position, dirTop.normalized, dir.magnitude);
+            RaycastHit2D hit3 = Physics2D.Raycast(Global.sBall.transform.position, dirBot.normalized, dir.magnitude);
+            //Debug.DrawLine(Global.sBall.transform.position, Global.sBall.transform.position + dir);
+            //Debug.DrawLine(Global.sBall.transform.position, Global.sBall.transform.position + dirTop.normalized * dir.magnitude);
+            //Debug.DrawLine(Global.sBall.transform.position, Global.sBall.transform.position + dirBot.normalized * dir.magnitude);
+            //RaycastHit2D hit = Physics2D.Raycast(Global.sBall.transform.position, Vector2.right);
+            if (hit || hit2 || hit3)
+            {
+                if (detectHit(hit) || detectHit(hit2) || detectHit(hit3))
+                    return;
+            }
             Global.sBall.kick(ballTarget, 2.0f);
         }
+    }
+
+    private bool detectHit(RaycastHit2D hit)
+    {
+        if (hit)
+        {
+            if (hit.collider.gameObject.name != this.name)
+            {
+                //Debug.Log(hit.collider.gameObject.name);
+                this.coach.newBallHolder();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void setSupportRole(Vector3 destination)
@@ -178,7 +208,7 @@ public class Player : MonoBehaviour
                 float dist3 = (opp - ahead3).magnitude;
                 float dist4 = (opp - this.transform.position).magnitude;
 
-                float radius = 0.5f;
+                float radius = 0.4f;
                 if (dist1 <= radius || dist2 <= radius || dist3 <= radius || dist4 <= radius)
                 {
                     if (mostDangerousOpponent == -1)

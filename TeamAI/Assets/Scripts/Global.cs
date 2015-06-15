@@ -26,6 +26,8 @@ namespace TeamAI
         static public Bounds sFieldBounds;
 
         static public System.Random sRandom;
+        static public float gameTime = 150.0f;
+        static public bool firstHalf = true;
 
         static public Ball sBall = null;
 
@@ -158,6 +160,7 @@ namespace TeamAI
                     PersonalBehavior pb = new PersonalBehavior();
                     pb.behavior = Convert.ToInt32(child.FirstChild.InnerText);
                     pb.zoneID = Convert.ToInt32(child.FirstChild.NextSibling.InnerText);
+                    pb.typeToDefend = Convert.ToInt32(child.FirstChild.NextSibling.NextSibling.InnerText);
 
                     s.m_personal.Add(pb);
                 }
@@ -227,8 +230,36 @@ namespace TeamAI
             rel5.ballPos = 0;
             rel5.teamPos = 1;
             rel5.destinationPos = -3;
+
+            Plan rel6 = new Plan();
+            rel6.isRelative = true;
+            rel6.ballPos = 0;
+            rel6.teamPos = 2;
+            rel6.destinationPos = 2;
             //sRelativePlans.Add(rel5);
 
+            Plan rel7 = new Plan();
+            rel7.isRelative = true;
+            rel7.ballPos = 0;
+            rel7.teamPos = 6;
+            rel7.destinationPos = 2;
+
+            Plan rel8 = new Plan();
+            rel8.isRelative = true;
+            rel8.ballPos = 0;
+            rel8.teamPos = -2;
+            rel8.destinationPos = 2;
+
+            Plan rel9 = new Plan();
+            rel9.isRelative = true;
+            rel9.ballPos = 0;
+            rel9.teamPos = 1;
+            rel9.destinationPos = 1;
+
+            sRelativePlans.Add(rel9);
+            sRelativePlans.Add(rel8);
+            sRelativePlans.Add(rel7);
+            sRelativePlans.Add(rel6);
             sRelativePlans.Add(rel5);
             sRelativePlans.Add(rel4);
             sRelativePlans.Add(rel3);

@@ -107,8 +107,8 @@ public class EditorFormation : EditorWindow
         }
 
         BeginWindows();
-        infoWindowRect = GUI.Window(0, infoWindowRect, infoWindow, "Tools");
-        controlWindowRect = GUI.Window(1, controlWindowRect, controlWindow, "Control");
+        infoWindowRect = GUI.Window(0, infoWindowRect, infoWindow, "Formation");
+        controlWindowRect = GUI.Window(1, controlWindowRect, controlWindow, "General");
         EndWindows();
     }
 

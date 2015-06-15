@@ -167,6 +167,10 @@ public class Ball : MonoBehaviour
                 GameObject.Find("Field").GetComponent<GameStateManager>().changeState(new TeamAI.StateBlueBall());
             }
         }
+        else
+        {
+            this.controller.coach.m_statistics.passesReceived += 1;
+        }
 
         this.controller = receiver;
         this.controller.m_usingPlan = false;

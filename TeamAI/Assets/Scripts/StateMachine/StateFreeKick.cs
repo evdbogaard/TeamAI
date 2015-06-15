@@ -11,6 +11,11 @@ namespace TeamAI
             Debug.Log("Entering freekick");
             timer = 3.0f;
             Global.gameRunning = false;
+
+            if (Global.CoachBlue.teamControlsBall())
+                Global.CoachRed.m_statistics.foulsMade += 1;
+            else
+                Global.CoachBlue.m_statistics.foulsMade += 1;
             //throw new System.NotImplementedException();
         }
 
@@ -26,11 +31,10 @@ namespace TeamAI
             else
             {
                 Global.CoachBlue.calculateDefence();
-                Global.CoachRed.calculateDefence();
+                Global.CoachRed.calculateOffence();
             }
 
-
-            if (timer < 0.0f)
+            if (Global.sBall.controllerInRange())
             {
                 State newState;
                 if (Global.CoachBlue.teamControlsBall())

@@ -8,6 +8,7 @@ namespace TeamAI
     {
         public int behavior;
         public int zoneID;
+        public int typeToDefend;
     }
 
     public class Strategy
@@ -17,6 +18,8 @@ namespace TeamAI
         public int attackLine;
         public int midfieldLine;
         public int defendLine;
+
+        public float score;
 
         public List<PersonalBehavior> m_personal;
         public Strategy()
@@ -37,15 +40,21 @@ namespace TeamAI
         public List<int> validDefenseLineIDs(int x, int y)
         {
             List<int> retVal = new List<int>();
+            int newX = 0;
 
             switch (defendLine)
             {
                 case 0:
                     //attack
+                    newX = x - 1;
+                    if (newX < 0) newX = 0;
+                    retVal.Add(y * 4 + newX);
+                    retVal.Add(((y + 1) % 3) * 4 + x);
+                    retVal.Add(((y + 2) % 3) * 4 + x);
                     break;
                 case 1:
                     //neutral
-                    int newX = x - 1;
+                    newX = x - 1;
                     if (newX < 0) newX = 0;
                     retVal.Add(y * 4 + newX);
                     retVal.Add(((y + 1) % 3) * 4 + newX);
@@ -53,6 +62,12 @@ namespace TeamAI
                     break;
                 case 2:
                     //defense
+                    newX = x - 1;
+                    if (newX < 0) newX = 0;
+                    if (newX > 1) newX = 1;
+                    retVal.Add(y * 4 + newX);
+                    retVal.Add(((y + 1) % 3) * 4 + newX);
+                    retVal.Add(((y + 2) % 3) * 4 + newX);
                     break;
                 default:
                     break;
@@ -67,16 +82,24 @@ namespace TeamAI
         public List<int> validMidLineIDs(int x, int y)
         {
             List<int> retVal = new List<int>();
+            int newX = 0;
 
             switch (midfieldLine)
             {
                 case 0:
                     //attack
+                    newX = x + 1;
+                    if (newX > 3) newX = 3;
+                    retVal.Add(y * 4 + newX);
+                    retVal.Add(((y + 1) % 3) * 4 + newX);
+                    retVal.Add(((y + 2) % 3) * 4 + newX);
                     break;
                 case 1:
                     //neutral
-                    retVal.Add(((y + 1) % 3) * 4 + x);
-                    retVal.Add(((y + 2) % 3) * 4 + x);
+                    if (y + 1 <= 2)
+                        retVal.Add((y + 1) * 4 + x);
+                    if (y - 1 >= 0)
+                        retVal.Add((y - 1) * 4 + x);
                     if (x - 1 > 0)
                         retVal.Add(y * 4 + x - 1);
                     if (x + 1 < 3)
@@ -84,6 +107,10 @@ namespace TeamAI
                     break;
                 case 2:
                     //defense
+                    retVal.Add(((y + 1) % 3) * 4 + x);
+                    retVal.Add(((y + 2) % 3) * 4 + x);
+                    if (x - 1 > 0)
+                        retVal.Add(y * 4 + x - 1);
                     break;
                 default:
                     break;
