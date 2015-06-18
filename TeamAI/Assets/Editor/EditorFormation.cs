@@ -18,7 +18,6 @@ public class EditorFormation : EditorWindow
     Rect infoWindowRect;
     Rect controlWindowRect;
 
-    ArrayList players;
     ArrayList formations;
 
     bool runOnce = false;
@@ -29,11 +28,13 @@ public class EditorFormation : EditorWindow
         field = (Resources.LoadAssetAtPath("Assets/Textures/EditorField.png", typeof(Sprite)) as Sprite).texture;
         player = (Resources.LoadAssetAtPath("Assets/Textures/EditorPlayer.png", typeof(Sprite)) as Sprite).texture;
 
-        infoWindowRect = new Rect(field.width + 20.0f, 10.0f, 200.0f, 300.0f);
-        controlWindowRect = new Rect(10.0f, 10.0f, 200.0f, 300.0f);
+        controlWindowRect = new Rect(10.0f, field.height + 10.0f, 200.0f, 300.0f);
+        infoWindowRect = new Rect(controlWindowRect.width + 20.0f, field.height + 10.0f, 200.0f, 300.0f);
+
+        this.minSize = new Vector2(field.width, infoWindowRect.position.y + infoWindowRect.height);
 
         //minSize = new Vector2(field.width + infoWindowRect.width + 25.0f, minSize.y);
-        players = new ArrayList();
+        //players = new ArrayList();
 
         formations = new ArrayList();
         loadFormations();
@@ -42,14 +43,15 @@ public class EditorFormation : EditorWindow
         runOnce = true;
     }
 
+    void OnEnable()
+    {
+        init();
+    }
+
     bool hasSelectedPlayer = false;
     int selectedPlayerId = 0;
     void OnGUI()
     {
-        if (!runOnce)
-            init();
-
-        //return;
 
         updateNumberOfPlayers();
 
@@ -83,8 +85,6 @@ public class EditorFormation : EditorWindow
 
         if (Event.current.type == EventType.mouseDrag)
         {
-            //Debug.Log(GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
-            //Debug.Log(Event.current.mousePosition);
             if (hasSelectedPlayer)
             {
                 PlayerInfo pi = f.m_playersInfo[selectedPlayerId] as PlayerInfo;
@@ -92,11 +92,6 @@ public class EditorFormation : EditorWindow
                 Repaint();
             }
         }
-
-        //Sprite test = Resources.LoadAssetAtPath("Assets/Textures/Field.png", typeof(Sprite)) as Sprite;
-
-        int stop = 0;
-        //test.texture.Resize(test.texture.width / 2, test.texture.height / 2);
 
         GUI.DrawTexture(new Rect(0, 0, field.width, field.height), field);
 
@@ -128,7 +123,11 @@ public class EditorFormation : EditorWindow
             numberOfPlayers = 0;
         }
 
-        GUILayout.Button("Remove");
+        if (GUILayout.Button("Remove"))
+        {
+            formations.RemoveAt(currentSelectedFormation);
+            currentSelectedFormation = 0;
+        }
 
         List<string> formationNames = new List<string>();
         for (int i = 0; i < formations.Count; i++)
@@ -172,31 +171,19 @@ public class EditorFormation : EditorWindow
         }
     }
 
-    int formationSelected = 0;
     int numberOfPlayers = 0;
     int oldNumberOfPlayer = 0;
-    int idesignation = 0;
 
     int currentSelectedFormation = 0;
 
-    //Vector2 pos = Vector2.zero;
-    bool folded = true;
     void infoWindow(int windowID)
     {
-        //List<string> a = new List<string>();
-        //a.Add("test");
-        //a.Add("aap");
-        
-        //string[] formationNames = new string[] {"Formation A", "Formation B"};
-        string[] designation = new string[] { "Attacker", "Midfielder", "Defender", "Goalie" };
+        string[] designation = new string[] { "Attacker", "Midfielder", "Defender"};
 
         Formation f = formations[currentSelectedFormation] as Formation;
-
-        //formationSelected = EditorGUILayout.Popup(formationSelected, a.ToArray());
         numberOfPlayers = EditorGUILayout.IntField("Number of players", numberOfPlayers);
         for (int i = 0; i < f.m_playersInfo.Count; i++)
         {
-            //EditorGUILayout.BeginFadeGroup(0.0f);
             PlayerInfo pi = f.m_playersInfo[i] as PlayerInfo;
             pi.toggle = EditorGUILayout.Foldout(pi.toggle, "Player" + i);
             if (pi.toggle)
@@ -228,7 +215,6 @@ public class EditorFormation : EditorWindow
 
         if (GUILayout.Button("Save"))
         {
-            //Debug.Log("Button pressed");
             saveAllFormations();
         }
         
@@ -280,11 +266,6 @@ public class EditorFormation : EditorWindow
 
             formations.Add(formation);
         }
-
-        //Formation formation = new Formation();
-        //formation.FormationName = formationList[0].FirstChild.InnerText;
-
-        int stop = 0;
     }
 
     void saveAllFormations()

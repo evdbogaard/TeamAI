@@ -31,9 +31,12 @@ public class EditorStrategy : EditorWindow
     {
         field = (Resources.LoadAssetAtPath("Assets/Textures/EditorField.png", typeof(Sprite)) as Sprite).texture;
         player = (Resources.LoadAssetAtPath("Assets/Textures/EditorPlayer.png", typeof(Sprite)) as Sprite).texture;
-        generalWindowRect = new Rect(field.width + 20.0f, 10.0f, 200.0f, 300.0f);
-        personalWindowRect = new Rect(10.0f, 10.0f, 200.0f, 200.0f);
-        ControlWindowRect = new Rect(10.0f, 10.0f, 200.0f, 300.0f);
+
+        ControlWindowRect = new Rect(10.0f, field.height + 10.0f, 200.0f, 300.0f);
+        generalWindowRect = new Rect(ControlWindowRect.width + 10.0f + 10.0f, field.height + 10.0f, 200.0f, 300.0f);
+        personalWindowRect = new Rect(generalWindowRect.position.x + generalWindowRect.width + 10.0f, field.height + 10.0f, 200.0f, 200.0f);
+
+        this.minSize = new Vector2(personalWindowRect.position.x + personalWindowRect.width, ControlWindowRect.position.y + ControlWindowRect.height);
 
         formations = new List<Formation>();
 
@@ -44,6 +47,11 @@ public class EditorStrategy : EditorWindow
         loadXML();
 
         runOnce = true;
+    }
+
+    void OnEnable()
+    {
+        init();
     }
 
     void loadFormations()
@@ -90,17 +98,10 @@ public class EditorStrategy : EditorWindow
 
             formations.Add(formation);
         }
-
-        //Formation formation = new Formation();
-        //formation.FormationName = formationList[0].FirstChild.InnerText;
-
-        int stop = 0;
     }
 
     void controlWindow(int windowID)
     {
-        //textField = GUILayout.TextField(textField);
-
         if (GUILayout.Button("Add"))
         {
             Strategy s = new Strategy();
@@ -110,16 +111,15 @@ public class EditorStrategy : EditorWindow
             s.m_personal.Add(new PersonalBehavior());
             s.m_personal.Add(new PersonalBehavior());
             strategies.Add(s);
-            //Formation f = new Formation();
-            //f.FormationName = textField;
-            //formations.Add(f);
 
-            //currentSelectedFormation = formations.Count - 1;
-            //oldNumberOfPlayer = 0;
-            //numberOfPlayers = 0;
+            currentSelectedStrategy = strategies.Count - 1;
         }
 
-        GUILayout.Button("Remove");
+        if (GUILayout.Button("Remove"))
+        {
+            strategies.RemoveAt(currentSelectedStrategy);
+            currentSelectedStrategy = 0;
+        }
 
         List<string> arrayNames = new List<string>();
         for (int i = 0; i < strategies.Count; i++)
@@ -127,14 +127,7 @@ public class EditorStrategy : EditorWindow
             arrayNames.Add(i.ToString());
         }
 
-
-
         currentSelectedStrategy = EditorGUILayout.Popup(currentSelectedStrategy, arrayNames.ToArray());
-
-
-
-
-
         GUI.DragWindow();
     }
 
@@ -162,9 +155,6 @@ public class EditorStrategy : EditorWindow
             s.midfieldLine = Convert.ToInt32(child.InnerText);
             child = child.NextSibling;
             s.defendLine = Convert.ToInt32(child.InnerText);
-            //child = child.NextSibling;
-
-            //formation.m_playersInfo = new List<PlayerInfo>();
             for (int j = 0; j < 5; j++)
             {
                 child = child.NextSibling;
@@ -178,20 +168,10 @@ public class EditorStrategy : EditorWindow
             }
             strategies.Add(s);
         }
-
-        //Formation formation = new Formation();
-        //formation.FormationName = formationList[0].FirstChild.InnerText;
-
-        int stop = 0;
     }
 
     void OnGUI()
     {
-        if (!runOnce)
-            init();
-
-        //return;
-
         if (Event.current.type == EventType.mouseDown)
         {
             //Debug.Log(Event.current.rawType);
@@ -273,7 +253,6 @@ public class EditorStrategy : EditorWindow
 
     }
 
-    int individualBehaviorChoise = 0;
     void personalWindow(int windowID)
     {
         PlayerInfo pi = formations[strategies[currentSelectedStrategy].formation].m_playersInfo[currentSelectedPlayer];
@@ -345,7 +324,6 @@ public class EditorStrategy : EditorWindow
 
         for (int i = 0; i < strategies.Count; i++)
         {
-            //Formation f = formations[i] as Formation;
             Strategy s = strategies[i];
             xml.WriteStartElement("Strategy");
 

@@ -4,7 +4,7 @@ using TeamAI;
 
 public class GameStateManager : MonoBehaviour
 {
-    private State m_currentState;
+    public State m_currentState;
 
     void Start()
     {

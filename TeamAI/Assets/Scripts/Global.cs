@@ -193,78 +193,24 @@ namespace TeamAI
                 p.teamPos = System.Convert.ToInt32(child.InnerText);
                 child = child.NextSibling;
                 p.destinationPos = System.Convert.ToInt32(child.InnerText);
+                child = child.NextSibling;
+                p.isRelative = System.Convert.ToBoolean(child.InnerText);
 
-                sPlans.Add(p);
+                if (p.isRelative)
+                {
+                    int ballPos = 0;
+                    int teamPos = p.teamPos - p.ballPos;
+                    int destinantionPos = p.destinationPos - p.ballPos;
+                    p.ballPos = ballPos;
+                    p.teamPos = teamPos;
+                    p.destinationPos = destinantionPos;
+                    sRelativePlans.Add(p);
+                }
+                else
+                    sPlans.Add(p);
+
+                //sPlans.Add(p);
             }
-
-            Plan rel = new Plan();
-            rel.isRelative = true;
-            rel.ballPos = 0;
-            rel.teamPos = -1;
-            rel.destinationPos = -1;
-            //sRelativePlans.Add(rel);
-
-            Plan rel2 = new Plan();
-            rel2.isRelative = true;
-            rel2.ballPos = 0;
-            rel2.teamPos = 4;
-            rel2.destinationPos = 4;
-            //sRelativePlans.Add(rel2);
-
-            Plan rel3 = new Plan();
-            rel3.isRelative = true;
-            rel3.ballPos = 0;
-            rel3.teamPos = -4;
-            rel3.destinationPos = -4;
-            //sRelativePlans.Add(rel3);
-
-            Plan rel4 = new Plan();
-            rel4.isRelative = true;
-            rel4.ballPos = 0;
-            rel4.teamPos = 5;
-            rel4.destinationPos = 5;
-            //sRelativePlans.Add(rel4);
-
-            Plan rel5 = new Plan();
-            rel5.isRelative = true;
-            rel5.ballPos = 0;
-            rel5.teamPos = 1;
-            rel5.destinationPos = -3;
-
-            Plan rel6 = new Plan();
-            rel6.isRelative = true;
-            rel6.ballPos = 0;
-            rel6.teamPos = 2;
-            rel6.destinationPos = 2;
-            //sRelativePlans.Add(rel5);
-
-            Plan rel7 = new Plan();
-            rel7.isRelative = true;
-            rel7.ballPos = 0;
-            rel7.teamPos = 6;
-            rel7.destinationPos = 2;
-
-            Plan rel8 = new Plan();
-            rel8.isRelative = true;
-            rel8.ballPos = 0;
-            rel8.teamPos = -2;
-            rel8.destinationPos = 2;
-
-            Plan rel9 = new Plan();
-            rel9.isRelative = true;
-            rel9.ballPos = 0;
-            rel9.teamPos = 1;
-            rel9.destinationPos = 1;
-
-            sRelativePlans.Add(rel9);
-            sRelativePlans.Add(rel8);
-            sRelativePlans.Add(rel7);
-            sRelativePlans.Add(rel6);
-            sRelativePlans.Add(rel5);
-            sRelativePlans.Add(rel4);
-            sRelativePlans.Add(rel3);
-            sRelativePlans.Add(rel2);
-            sRelativePlans.Add(rel);
         }
 
         static private void createStartegyGrid()

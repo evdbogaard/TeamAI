@@ -38,8 +38,10 @@ public class EditorPlan : EditorWindow
         ball = (Resources.LoadAssetAtPath("Assets/Textures/Ball.png", typeof(Sprite)) as Sprite).texture;
         player = (Resources.LoadAssetAtPath("Assets/Textures/EditorPlayer.png", typeof(Sprite)) as Sprite).texture;
 
-        infoWindowRect = new Rect(field.width + 20.0f, 10.0f, 200.0f, 300.0f);
-        controlWindowRect = new Rect(10.0f, 10.0f, 200.0f, 300.0f);
+        controlWindowRect = new Rect(10.0f, field.height + 10.0f, 200.0f, 300.0f);
+        infoWindowRect = new Rect(controlWindowRect.width + 10.0f + 10.0f, field.height + 10.0f, 200.0f, 300.0f);
+
+        minSize = new Vector2(field.width, field.height + 10.0f + controlWindowRect.height);
 
         textureSelected = false;
         ballPos = Vector2.zero;
@@ -71,8 +73,8 @@ public class EditorPlan : EditorWindow
         float w = field.width / 4.0f;
         float h = field.height / 3.0f;
 
-        ballPos.x = w * (float)x + w/2.0f;
-        ballPos.y = field.height - (h * (float)y + h/2.0f);
+        ballPos.x = w * (float)x + w / 2.0f;
+        ballPos.y = field.height - (h * (float)y + h / 2.0f);
 
         int beginy = p.teamPos / 4;
         int beginx = p.teamPos - (beginy * 4);
@@ -83,17 +85,15 @@ public class EditorPlan : EditorWindow
         int endX = p.destinationPos - (endY * 4);
         endPos.x = w * (float)endX + w / 2.0f;
         endPos.y = field.height - (h * (float)endY + h / 2.0f);
+    }
 
-        int stop = 0;
+    void OnEnable()
+    {
+        init();
     }
 
     void OnGUI()
     {
-        if (!runOnce)
-            init();
-
-        //return;
-
         changeInSelection();
 
         if (Event.current.type == EventType.mouseDown)
@@ -143,8 +143,6 @@ public class EditorPlan : EditorWindow
                     p.destinationPos = destY * 4 + destX;
                 }
             }
-
-            int stop = 0;
         }
 
         if (Event.current.type == EventType.mouseDrag)
@@ -231,7 +229,7 @@ public class EditorPlan : EditorWindow
         p.teamPos = EditorGUILayout.IntField("Teammate Position", p.teamPos);
         p.destinationPos = EditorGUILayout.IntField("Teammate Destination", p.destinationPos);
 
-        EditorGUILayout.Toggle("Is relative", false);
+        p.isRelative = EditorGUILayout.Toggle("Is relative", p.isRelative);
 
         if (GUILayout.Button("Save"))
         {
@@ -261,6 +259,8 @@ public class EditorPlan : EditorWindow
             p.teamPos = System.Convert.ToInt32(child.InnerText);
             child = child.NextSibling;
             p.destinationPos = System.Convert.ToInt32(child.InnerText);
+            child = child.NextSibling;
+            p.isRelative = System.Convert.ToBoolean(child.InnerText);
 
             plans.Add(p);
         }
@@ -288,6 +288,10 @@ public class EditorPlan : EditorWindow
             xml.WriteString(p.destinationPos.ToString());
             xml.WriteEndElement();
 
+            xml.WriteStartElement("IsRelative");
+            xml.WriteString(p.isRelative.ToString());
+            xml.WriteEndElement();
+
             xml.WriteEndElement();
         }
         xml.WriteEndElement();
@@ -310,9 +314,15 @@ public class EditorPlan : EditorWindow
         {
             Plan p = new Plan();
             plans.Add(p);
+
+            currentSelectedPlan = plans.Count - 1;
         }
 
-        GUILayout.Button("Remove");
+        if (GUILayout.Button("Remove"))
+        {
+            plans.RemoveAt(currentSelectedPlan);
+            currentSelectedPlan = 0;
+        }
 
         GUI.DragWindow();
     }

@@ -9,8 +9,6 @@ public class Ball : MonoBehaviour
     public Vector3 velocity;
 
     private Vector3 m_previousPosition;
-
-    bool kickonce = false;
     float ballStillTimer;
 
     float ballStealCooldownTime = 1.0f;

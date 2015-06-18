@@ -4,16 +4,19 @@ using TeamAI;
 
 public class Field : MonoBehaviour 
 {
+    GameStateManager gsm;
 	// Use this for initialization
 	void Start() 
     {
         TeamAI.Global.init();
         GameObject test = TeamAI.Global.sField;
-
+        gsm = GetComponent<GameStateManager>();
         int stop = 0;
 	}
 	
 	// Update is called once per frame
+    bool showStrategyGrid = false;
+    bool showInfluenceGrid = false;
 	void Update() 
     {
         for (int i = 0; i < Global.GridSizeX * Global.GridSizeY; i++)
@@ -33,13 +36,28 @@ public class Field : MonoBehaviour
                 Global.sBall.controller.coach.newBallHolder();
                 Global.sBall.velocity = Vector3.zero;
             }
-            Debug.Break();
+            else
+            {
+                Debug.Break();
+            }
         }
 
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            showStrategyGrid = !showStrategyGrid;
+        }
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            showInfluenceGrid = !showInfluenceGrid;
+        }
 
+        if (showInfluenceGrid)
+        {
+            TeamAI.Global.drawGrid();
+        }
 
-        //TeamAI.Global.drawGrid();
-        TeamAI.Global.drawPlanGrid();
+        if (showStrategyGrid)
+            TeamAI.Global.drawPlanGrid();
 	}
 
     public bool scored = false;
@@ -61,9 +79,14 @@ public class Field : MonoBehaviour
 
         GUIStyle test = new GUIStyle();
         test.fontSize = 50;
+        test.normal.textColor = Color.white;
         GUI.Label(new Rect(300, 25, 100, 100), Global.blueGoals.ToString(), test);
-        GUI.Label(new Rect(400, 25, 100, 100), Global.redGoals.ToString(), test);
-        GUI.Label(new Rect(350, 10, 100, 100), Global.gameTime.ToString(), test);
+        GUI.Label(new Rect(450, 25, 100, 100), Global.redGoals.ToString(), test);
+        GUI.Label(new Rect(350, 525, 100, 100), Global.gameTime.ToString("0"), test);
+        GUI.Label(new Rect(10, 525, 300, 100), gsm.m_currentState.ToString());
+        GUI.Label(new Rect(10, 545, 300, 100), "[S] toggle strategy grid");
+        GUI.Label(new Rect(10, 560, 300, 100), "[I] toggle influence grid");
+        GUI.Label(new Rect(10, 575, 300, 100), "[P] toggle play lines");
 
         for (int y = 0; y < 3; y++)
         {

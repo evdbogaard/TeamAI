@@ -27,11 +27,13 @@ namespace TeamAI
             {
                 Global.CoachBlue.calculateOffence();
                 Global.CoachRed.calculateDefence();
+                Global.CoachRed.moveOutsideBallRadius();
             }
             else
             {
                 Global.CoachBlue.calculateDefence();
                 Global.CoachRed.calculateOffence();
+                Global.CoachBlue.moveOutsideBallRadius();
             }
 
             if (Global.sBall.controllerInRange())

@@ -9,6 +9,7 @@ public class Statistics
     public int passesReceived;
     public float timeInPossession;
     public int foulsMade;
+    public float timeInStrategy;
 
     public Statistics()
     {
@@ -16,28 +17,25 @@ public class Statistics
         passesReceived = 0;
         timeInPossession = 0;
         foulsMade = 0;
+        timeInStrategy = 0.9f;
     }
 }
 
 public class Manager : MonoBehaviour 
 {
     private List<Player> m_fieldPlayers;
-    //private GridPoint[] m_influenceGrid
-
     private Formation m_currentFormation;
     private Strategy m_currentStrategy;
     public int selectedFormation = 0;
     private int oldSelectedFormation = 0;
 
-    public int strategyNumber = 0;
+    private int strategyNumber = 1;
 
     public Statistics m_statistics;
 
     public GameObject goal;
 
     bool passCounts = true;
-
-    //private List<Plan> m_offensivePlans;
 
     private Plan m_currentPlan;
     private Player m_support;
@@ -48,7 +46,6 @@ public class Manager : MonoBehaviour
 	void Start() 
     {
         m_fieldPlayers = new List<Player>();
-        //m_offensivePlans = new List<Plan>();
         m_statistics = new Statistics();
 
         m_currentPlan = null;
@@ -68,12 +65,8 @@ public class Manager : MonoBehaviour
 
                 player.coach = this;
 
-                // Field is 600 x 382
-                // Ingame X: 36 - 700 or -6 6
                 float x = (pi.position.x / 600.0f * 12.0f) - 6.0f;
                 float y = (pi.position.y / 382.0f * 7.5f) - 3.75f;
-                //x = (x / 600.0f * 12.0f) - 6.0f;
-                //x = (x * 12.0f) - 6.0f;
 
                 float startX = ((x + 5.5f) / 2.0f) - 5.5f;
 
@@ -83,11 +76,14 @@ public class Manager : MonoBehaviour
                     y = -y;
                     startX = -startX;
 
-                    player.directOpponent = Global.CoachBlue.FieldPlayers[i];
+                    //player.directOpponent = Global.CoachBlue.FieldPlayers[i];
                     enemy = Global.CoachBlue;
                 }
                 else
+                {
+                    //player.directOpponent = Global.CoachRed.FieldPlayers[i];
                     enemy = Global.CoachRed;
+                }
 
                 //Vector3 testCoord = Camera.main.ScreenToWorldPoint(temp);
                 player.IdlePosition = new Vector3(x, -y, 0.0f);
@@ -99,6 +95,29 @@ public class Manager : MonoBehaviour
 
         if (name.Contains("Red"))
             Global.sBall.controller = m_fieldPlayers[3];
+
+        for (int i = 0; i < Global.sStrategies.Count; i++)
+        {
+            if (Global.sStrategies[i].formation == selectedFormation)
+            {
+                strategyScores.Add(i, 3.0f);
+            }
+        }
+
+        int firstStrategy = Global.sRandom.Next(strategyScores.Count-1);
+        strategyNumber = firstStrategy;
+
+        int currentPos = 0;
+        Dictionary<int, float>.Enumerator enumerator = strategyScores.GetEnumerator();
+        while(enumerator.MoveNext())
+        {
+            if (currentPos == firstStrategy)
+            {
+                strategyNumber = enumerator.Current.Key;
+            }
+        }
+
+        m_currentStrategy = Global.sStrategies[strategyNumber];
 
         //setDirectOpponents();
 	}
@@ -164,6 +183,7 @@ public class Manager : MonoBehaviour
 
                     m_fieldPlayers[i].directOpponent = enemy.FieldPlayers[j];
                     takenEnemies.Add(j);
+                    break;
                 }
             }
             
@@ -238,8 +258,62 @@ public class Manager : MonoBehaviour
             }
         }
 
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            showPlay = !showPlay;
+        }
+
+        evaluateStrategy();
         calculateInfluenceMaps();
 	}
+
+    Dictionary<int, float> strategyScores = new Dictionary<int, float>();
+    public void evaluateStrategy()
+    {
+        m_statistics.timeInStrategy += Time.deltaTime;
+
+        if (m_statistics.passesReceived > m_statistics.passes)
+            m_statistics.passesReceived = m_statistics.passes;
+
+        float foulScore = Mathf.Max(0.0f, 1.0f - (System.Convert.ToSingle(m_statistics.foulsMade) / 10.0f));
+        float possessionScore = m_statistics.timeInPossession / m_statistics.timeInStrategy;
+        float passingScore = (m_statistics.passes != 0) ? System.Convert.ToSingle(m_statistics.passesReceived) / System.Convert.ToSingle(m_statistics.passes) : 0.0f;
+
+        float currentScore = foulScore + possessionScore + passingScore;
+        m_currentStrategy.score = currentScore;
+
+        strategyScores[strategyNumber] = currentScore;
+
+        if (m_statistics.passes >= 5 && currentScore < 1.5f)
+        {
+            List<int> possibleStrategies = new List<int>();
+            int highestStrategy = 0;
+            float highestScore = 0.0f;
+
+            Dictionary<int,float>.Enumerator enumerator = strategyScores.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current.Value > highestScore)
+                {
+                    highestStrategy = enumerator.Current.Key;
+                    highestScore = enumerator.Current.Value;
+                }
+            }
+
+            Strategy newStategy = Global.sStrategies[highestStrategy];
+            if (newStategy != m_currentStrategy)
+            {
+                m_currentStrategy = Global.sStrategies[highestStrategy];
+                m_statistics.foulsMade = 0;
+                m_statistics.timeInPossession = 0.0f;
+                m_statistics.timeInStrategy = 0.0f;
+                m_statistics.passes = 0;
+                m_statistics.passesReceived = 0;
+                strategyNumber = highestStrategy;
+                setDirectOpponents();
+            }
+        }
+    }
 
     public void setStartPositions()
     {
@@ -286,30 +360,39 @@ public class Manager : MonoBehaviour
         return id;
     }
 
+    bool showPlay = false;
+    float timeInScoringPos = 0.0f;
     public void calculateOffence()
     {
         int ballGridID = Global.planGridId(Global.sBall.transform.position);
         ballGridID = idToRed(ballGridID);
-        if (ballGridID == 7)
+        if (ballGridID == 7 && timeInScoringPos < 1.0f)
         {
-            // hardcoded shoot
+            timeInScoringPos += Time.deltaTime;
+
             if (name.Contains("Red"))
                 Global.sBall.controller.kickBall(Global.CoachBlue.goal.transform.position);
             else
                 Global.sBall.controller.kickBall(Global.CoachRed.goal.transform.position);
-        } 
+        }
         else if (m_currentPlan == null)
         {
+            timeInScoringPos = 0.0f;
             m_currentPlan = selectPlan(out m_support);
         }
         else
         {
+            timeInScoringPos = 0.0f;
             Vector3 destination = m_support.m_planDesignation;
             float supportTime = m_support.timeToReachPos(destination);
             float ballTime = Global.sBall.timeToReachTarget(destination, 2.0f);
 
-            Debug.DrawLine(m_support.transform.position, destination);
-            Debug.DrawLine(Global.sBall.transform.position, destination);
+            if (showPlay)
+            {
+                Debug.DrawLine(m_support.transform.position, m_support.m_target);
+                Debug.DrawLine(m_support.transform.position, destination);
+                Debug.DrawLine(Global.sBall.transform.position, destination);
+            }
 
             if (supportTime < ballTime)
             {
@@ -324,12 +407,10 @@ public class Manager : MonoBehaviour
                 }
 
                 Global.sBall.controller.kickBall(destination);
-                //Global.sBall.kick(destination, 2.0f);
             }
         }
 
         positionOffence();
-        checkMultipleInSameGrid();
     }
 
     private void positionToId(Vector3 pos, out int x, out int y)
@@ -407,44 +488,6 @@ public class Manager : MonoBehaviour
             else
                 occupyList.Add(id);
         }
-
-        /*for (int i = 0; i < m_fieldPlayers.Count; i++)
-        {
-            if (m_fieldPlayers[i] == m_support || m_fieldPlayers[i] == Global.sBall.controller || m_fieldPlayers[i].designation != "eDefender")
-                continue;
-
-            Vector3 target = m_fieldPlayers[i].m_target;
-            int x = 0;
-            int y = 0;
-            positionToId(target, out x, out y);
-            int id = y * 4 + x;
-
-            if (!occupyList.Contains(id))
-            {
-                occupyList.Add(id);
-            }
-            else
-            {
-
-
-                /*if (y == 0)
-                    y += 1;
-                else if (y == 2)
-                    y -= 1;
-                else
-                {
-                    System.Random r = new System.Random();
-                    if (r.Next(0, 10) > 5)
-                        y += 1;
-                    else
-                        y -= 1;
-                }*/
-
-           /*     Vector3 newTarget;
-                if (getSafePointInGrid(idToRed(y * 4 + x), out newTarget))
-                    m_fieldPlayers[i].m_target = newTarget;
-            }
-        }*/
     }
 
     void OnGUI()
@@ -456,7 +499,10 @@ public class Manager : MonoBehaviour
         GUI.Label(new Rect(x, 10, 100, 100), "Fouls made: " + m_statistics.foulsMade.ToString());
         GUI.Label(new Rect(x, 30, 100, 100), "passes: " + m_statistics.passes.ToString());
         GUI.Label(new Rect(x, 50, 100, 100), "passes arrived: " + m_statistics.passesReceived.ToString());
-        GUI.Label(new Rect(x, 70, 100, 100), "possession: " + m_statistics.timeInPossession.ToString());
+        GUI.Label(new Rect(x, 70, 300, 100), "possession: " + m_statistics.timeInPossession.ToString("0.00"));
+        GUI.Label(new Rect(x, 90, 300, 100), "Formation: " + m_currentFormation.FormationName);
+        GUI.Label(new Rect(x, 110, 100, 100), "Strategy: " + strategyNumber.ToString());
+        GUI.Label(new Rect(x, 130, 100, 100), "Score: " + m_currentStrategy.score.ToString("0.00"));
     }
 
     private void positionOffence()
@@ -546,30 +592,23 @@ public class Manager : MonoBehaviour
         }
     }
 
+    public void moveOutsideBallRadius()
+    {
+        for (int i = 0; i < m_fieldPlayers.Count; i++)
+        {
+            Vector3 playerPos = m_fieldPlayers[i].transform.position;
+            Vector3 ballPos = Global.sBall.transform.position;
+
+            Vector3 dist = playerPos - ballPos;
+            if (dist.sqrMagnitude < 0.5f)
+            {
+                m_fieldPlayers[i].m_target = m_fieldPlayers[i].m_target + dist.normalized * 0.5f;
+            }
+        }
+    }
+
     public void calculateDefence()
     {
-        /*for (int i = 0; i < m_fieldPlayers.Count; i++)
-        {
-            if (m_fieldPlayers[i].directOpponent == Global.sBall.controller)
-            {
-                Vector3 target = m_fieldPlayers[i].directOpponent.transform.position - goal.transform.position;// -directOpponent.transform.position;
-                float distance = target.magnitude;
-                Vector3 targetN = target.normalized;
-
-                m_fieldPlayers[i].m_target = goal.transform.position + targetN * distance * 0.5f;// moveTowards(coach.goal.transform.position + targetN * distance * 0.5f, 1.0f);
-            }
-            else
-            {
-                Vector3 target = Global.sBall.transform.position - m_fieldPlayers[i].directOpponent.transform.position;
-                float distance = target.magnitude;
-                Vector3 targetN = target.normalized;
-
-                m_fieldPlayers[i].m_target = m_fieldPlayers[i].directOpponent.transform.position + targetN * distance * 0.35f;//
-
-                //moveTowards(directOpponent.transform.position + targetN * distance * 0.35f, 1.0f);
-            }
-        }*/
-
         for (int i = 0; i < m_fieldPlayers.Count; i++)
         {
             PersonalBehavior pb = m_currentStrategy.m_personal[i];
@@ -615,7 +654,12 @@ public class Manager : MonoBehaviour
                         positionToId(Global.sBall.transform.position, out x, out y);
 
                         if (x >= 2)
-                            m_fieldPlayers[i].m_target = Global.sBall.transform.position;
+                        {
+                            if ((Global.sBall.transform.position - m_fieldPlayers[i].transform.position).sqrMagnitude > 1.0f)
+                                m_fieldPlayers[i].m_target = Global.sBall.transform.position;
+                            else
+                                m_fieldPlayers[i].m_target = m_fieldPlayers[i].transform.position;
+                        }
                         else
                         {
                             int targetID = idToRed(Global.planGridId(m_fieldPlayers[i].m_target));
@@ -638,118 +682,7 @@ public class Manager : MonoBehaviour
                 default:
                     break;
             }
-
-            /*if (tmp.shouldDefend[i])
-            {
-                Vector3 target = m_fieldPlayers[i].directOpponent.transform.position - goal.transform.position;
-                float distance = target.magnitude;
-                Vector3 targetN = target.normalized;
-
-                m_fieldPlayers[i].m_target = goal.transform.position + targetN * distance * 0.75f;
-
-                if (idToRed(Global.planGridId(m_fieldPlayers[i].m_target)) == 4)
-                {
-                    target = Global.sBall.transform.position - m_fieldPlayers[i].directOpponent.transform.position;
-                    distance = target.magnitude;
-                    targetN = target.normalized;
-
-                    m_fieldPlayers[i].m_target = m_fieldPlayers[i].directOpponent.transform.position + targetN * distance * 0.35f;
-                }
-
-                //positionDefencively(m_fieldPlayers[i]);
-
-            }
-            else
-            {
-                positionPlayer(m_fieldPlayers[i]);
-            }*/
         }
-
-        checkMultipleInSameGrid();
-    }
-
-    public void positionDefencively(Player player)
-    {
-        int ballX;
-        int ballY;
-        positionToId(Global.sBall.transform.position, out ballX, out ballY);
-
-        int ballID = idToRed(Global.planGridId(Global.sBall.transform.position));
-
-        int newX = 0;
-        int newY = 0;
-        switch (player.designation)
-        {
-            case "eDefender":
-                newX = ballX - 1;
-                newY = ballY;
-
-                if (ballID == 2 || ballID == 3 || ballID == 6 || ballID == 7 || ballID == 10 || ballID == 11)
-                {
-                    if (player.lastRefresh > 1.0f)
-                    {
-                        player.lastRefresh = 0.0f;
-                    }
-                    else
-                    {
-                        // position defender on own field close to line
-                        int playerId = idToRed(Global.planGridId(player.m_target));
-                        if (playerId == 0 || playerId == 1 || playerId == 4 || playerId == 5 || playerId == 8 || playerId == 9)
-                        {
-                            return;
-                        }
-                    }
-
-                    newX = ballX - 1;
-                    newY = ballY;
-                }
-
-                break;
-            case "eMidfielder":
-                break;
-            case "eAttacker":
-                break;
-            default:
-                break;
-        }
-
-        Vector3 newTarget;
-        if (getSafePointInGrid(idToRed(newY * 4 + newX), out newTarget))
-            player.m_target = newTarget;
-    }
-
-    public void positionPlayer(Player player)
-    {
-        int ballX;
-        int ballY;
-        positionToId(Global.sBall.transform.position, out ballX, out ballY);
-
-        int newX = 0;
-        int newY = 0;
-        switch (player.designation)
-        {
-            case "eDefender":
-                break;
-            case "eMidfielder":
-                break;
-            case "eAttacker":
-                newY = ballY;
-                newX = ballX + 2;
-
-                if (ballX >= 2)
-                {
-                    player.m_target = Global.sBall.transform.position;
-                    return;
-                }
-
-                break;
-            default:
-                break;
-        }
-
-        Vector3 newTarget;
-        if (getSafePointInGrid(idToRed(newY * 4 + newX), out newTarget))
-            player.m_target = newTarget;
     }
 
     public bool teamControlsBall()
@@ -826,6 +759,7 @@ public class Manager : MonoBehaviour
 
                         float risk = System.Convert.ToSingle(m_currentStrategy.risk);
                         risk = risk / 100.0f * 2.0f - 1.0f;
+                        risk = risk * -1.0f;
 
                         if (score >= risk)
                         {

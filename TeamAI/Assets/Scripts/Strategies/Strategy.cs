@@ -25,6 +25,7 @@ namespace TeamAI
         public Strategy()
         {
             formation = 0;
+            score = 3.0f;
 
             m_personal = new List<PersonalBehavior>();
         }

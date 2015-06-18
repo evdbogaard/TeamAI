@@ -21,7 +21,7 @@ public class Player : MonoBehaviour
     public float lastRefresh;
 
     float m_normalSpeed = 1.0f;
-    float m_sprintSpeed = 1.5f;
+    float m_sprintSpeed = 1.0f;
 
     float maxSpeed = 1.0f;
     Vector3 m_velocity;
@@ -55,6 +55,8 @@ public class Player : MonoBehaviour
             moveTowards(m_target, m_sprintSpeed);
         else
             moveTowards(m_target, m_normalSpeed);
+
+
 
         /*if (!m_runningGame)
         {
